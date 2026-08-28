@@ -5,7 +5,7 @@
 <p align="center"><strong>Human-approved, server-enforced authority for agentic shopping.</strong></p>
 
 <p align="center">
-  <a href="https://intent-commerce.gowtham0992.chatgpt.site/">Live product on ChatGPT Sites</a>
+  <a href="https://intent-commerce.gowtham0992.chatgpt.site/intent">Live product on ChatGPT Sites</a>
   ·
   <a href="#try-the-live-product">Try it</a>
   ·
@@ -50,7 +50,7 @@ Neither participant can finish the flow alone. The agent cannot create its own a
 
 No account, credentials, store, Shopify token, or seeded catalog is required.
 
-1. Open [Intent](https://intent-commerce.gowtham0992.chatgpt.site/) in ChatGPT's in-app browser or another WebMCP-enabled client.
+1. Open [Intent](https://intent-commerce.gowtham0992.chatgpt.site/intent) in ChatGPT's in-app browser or another WebMCP-enabled client.
 2. Give the agent this test request:
 
    > Use Intent to find a charger available in the US under $100, with at least 100W total output, three ports including two USB-C ports, foldable US prongs, a rating of at least 4.5, and at least 200 reviews. Stage the strongest eligible offer for approval. Do not purchase anything.

@@ -25,9 +25,13 @@ test("production surface uses an injected exact commerce origin without an ifram
 test("production hosts allowlist only the exact app and commerce origins", async () => {
   const commerce = await readFile(new URL("../wrangler.commerce.jsonc", import.meta.url), "utf8");
   const vercel = await readFile(new URL("../vercel.json", import.meta.url), "utf8");
+  const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
+  const plugin = await readFile(new URL("../plugins/intent/skills/intent-shopping/SKILL.md", import.meta.url), "utf8");
   assert.match(commerce, /https:\/\/intent-lime-five\.vercel\.app/);
   assert.match(commerce, /\.well-known\/ucp/);
   assert.match(vercel, /https:\/\/intent-commerce\.gowtham0992\.workers\.dev/);
+  assert.match(readme, /https:\/\/intent-commerce\.gowtham0992\.chatgpt\.site\/intent/);
+  assert.match(plugin, /https:\/\/intent-commerce\.gowtham0992\.chatgpt\.site\/intent/);
   assert.doesNotMatch(vercel, /intent-vault/);
   assert.doesNotMatch(`${commerce}\n${vercel}`, /http:\/\//);
 });
