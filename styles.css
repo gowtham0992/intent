@@ -44,7 +44,15 @@ em { font-family:"Playfair Display",Georgia,serif; font-weight:500; }
 .search-constraints b { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; }
 .hero-proof { margin-top:25px; display:flex; gap:28px; color:#687176; font:500 9px/1 "DM Mono",monospace; text-transform:uppercase; letter-spacing:.07em; }
 .hero-proof i { display:inline-block; width:6px; height:6px; margin-right:7px; border-radius:50%; background:#7ca117; box-shadow:0 0 0 4px rgba(124,161,23,.1); }
-.hero-footnote { max-width:620px; margin:27px 0 0; color:#8b9193; font-size:10px; line-height:1.5; }
+.agent-status { max-width:620px; margin:18px 0 0; padding:9px 12px; display:flex; align-items:center; gap:10px; border:1px solid var(--line); border-radius:99px; color:#657075; background:rgba(251,250,245,.5); text-align:left; }
+.agent-status>i { width:7px; height:7px; flex:0 0 auto; border-radius:50%; background:#a4aaac; box-shadow:0 0 0 4px rgba(104,113,118,.08); }
+.agent-status div { min-width:0; display:flex; align-items:baseline; gap:7px; }
+.agent-status b { color:var(--ink); font:700 8px/1 "DM Mono",monospace; text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; }
+.agent-status span { overflow:hidden; font-size:9px; line-height:1.3; text-overflow:ellipsis; white-space:nowrap; }
+.agent-status[data-state="connected"] { border-color:rgba(124,161,23,.25); background:rgba(201,255,49,.08); }
+.agent-status[data-state="connected"]>i { background:#7ca117; box-shadow:0 0 0 4px rgba(124,161,23,.1); }
+.agent-status[data-state="browsing"] { border-color:rgba(105,113,118,.18); }
+.hero-footnote { max-width:620px; margin:14px 0 0; color:#8b9193; font-size:10px; line-height:1.5; }
 
 .market { padding:122px 4vw 34px; flex-direction:column; background:#e9e7dd; }
 .market-head { margin-bottom:30px; display:flex; justify-content:space-between; align-items:flex-end; }
@@ -147,7 +155,7 @@ dialog>p { color:#6e767a; font-size:10px; }
   .topbar { height:64px; padding:0 16px; }.brand-logo { width:104px; }.proof-button small { display:none; }
   .hero { min-height:100svh; padding:110px 14px 28px; }.hero h1 { font-size:clamp(70px,23vw,104px); }.hero-copy { margin:30px auto; font-size:15px; }
   .search-main { padding:13px; grid-template-columns:auto 1fr; }.search-main input { font-size:13px; }.run-button { grid-column:1/-1; width:100%; }
-  .search-constraints { padding:13px; grid-template-columns:1fr 1fr; gap:15px; }.hero-proof { gap:10px; flex-wrap:wrap; justify-content:center; }.hero-footnote { font-size:9px; }
+  .search-constraints { padding:13px; grid-template-columns:1fr 1fr; gap:15px; }.hero-proof { gap:10px; flex-wrap:wrap; justify-content:center; }.agent-status { align-items:flex-start; border-radius:14px; }.agent-status div { display:grid; gap:3px; }.agent-status span { white-space:normal; }.hero-footnote { font-size:9px; }
   .market { padding:94px 13px 22px; }.market-head { align-items:flex-start; }.market-head h2 { font-size:48px; }.market-layout { display:flex; flex-direction:column; }.brief-panel { min-height:310px; }.offers-stage { overflow:visible; }.offers-grid { height:auto; display:flex; overflow-x:auto; scroll-snap-type:x mandatory; }.offer-card { min-width:82vw; scroll-snap-align:center; }
   .selection-dock { position:sticky; bottom:8px; grid-template-columns:1fr auto; gap:12px; }.selection-price { text-align:right; }.selection-dock .primary-button { grid-column:1/-1; width:100%; }
   .authority { padding:92px 14px 28px; align-items:flex-start; overflow:auto; }.authority-grid { display:flex; flex-direction:column; gap:40px; }.authority-copy h2 { font-size:68px; }.authority-copy>p:not(.eyebrow) { margin:25px 0; }.lease-clock { width:84px; height:84px; }.lease-clock span { font-size:28px; }.approval-card { width:100%; }.approval-card>img { height:190px; }

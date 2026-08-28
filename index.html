@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="description" content="Intent is the shared decision layer for universal agentic commerce.">
+    <meta name="description" content="Intent turns human approval into narrow, expiring, server-enforced authority for agentic shopping.">
     <title>Intent — shop the open web with your agent</title>
     <link rel="icon" type="image/png" href="/assets/intent-icon.png">
     <link rel="stylesheet" href="/styles.css">
@@ -18,9 +18,9 @@
     <main>
       <section class="view hero is-active" id="hero">
         <div class="hero-halo" aria-hidden="true"></div>
-        <p class="eyebrow">Universal agentic commerce · live</p>
+        <p class="eyebrow">Human-governed agentic commerce · live</p>
         <h1>Shop with<br><em>intent.</em></h1>
-        <p class="hero-copy">Your agent proposes the purchase. You set the rules. Intent makes those rules executable—and impossible to quietly exceed.</p>
+        <p class="hero-copy">Your agent proposes the purchase. You set the rules. Intent makes those rules executable—and prevents its checkout capability from exceeding them.</p>
         <form class="search-shell" id="goal-form">
           <div class="search-main">
             <span class="prompt-glyph" aria-hidden="true">✦</span>
@@ -37,6 +37,10 @@
         </form>
         <div class="hero-proof">
           <span><i></i> Live merchant inventory</span><span><i></i> No store account</span><span><i></i> Payment stays with merchant</span>
+        </div>
+        <div class="agent-status" id="agent-status" data-state="checking" role="status">
+          <i aria-hidden="true"></i>
+          <div><b>Checking agent connection</b><span>Intent works best in a WebMCP-enabled client.</span></div>
         </div>
         <p class="hero-footnote">WebMCP lets your agent operate this interface. UCP connects Intent to commerce across participating merchants.</p>
       </section>

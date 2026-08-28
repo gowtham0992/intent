@@ -8,6 +8,7 @@ coverage/
 dist/
 public/
 .next/
+.vinext/
 .wrangler/
 strategy/
 evidence/

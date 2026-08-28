@@ -107,7 +107,7 @@ The registration lifecycle is implemented in [app.js](app.js), and server enforc
 | Layer | Role |
 | --- | --- |
 | Human | Owns the goal, edits the mandate, and creates authority with an explicit click |
-| Intent on Vercel | Hosts the decision room, deterministic evaluation, provenance, and page-defined WebMCP tools |
+| Intent on ChatGPT Sites | Hosts the decision room, deterministic evaluation, provenance, and page-defined WebMCP tools |
 | WebMCP client | Reasons over candidates, stages a recommendation, and invokes only capabilities currently exposed by the page |
 | Cloudflare Worker + Durable Object | Validates input, issues the opaque lease, consumes it atomically, and enforces expiry and exact scope |
 | Shopify Global Catalog/UCP | Supplies live cross-merchant offers and merchant checkout handoffs |
@@ -208,7 +208,11 @@ curl https://your-intent-worker.example/.well-known/ucp
 
 The response should advertise <code>dev.ucp.shopping.catalog.search</code>, <code>dev.ucp.shopping.catalog.lookup</code>, and <code>dev.shopify.catalog.global</code>.
 
-### 2. Deploy the Vercel decision room
+### 2. Deploy the decision room
+
+The canonical Intent deployment uses ChatGPT Sites. A fork can use ChatGPT Sites, Vercel, or another static host that serves the built assets with the required security headers. The included Vercel configuration is a ready-to-run fallback deployment.
+
+#### Vercel fallback
 
 Replace the current Worker origin in <code>vercel.json</code> under the Content Security Policy's <code>connect-src</code> directive.
 

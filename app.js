@@ -245,7 +245,9 @@ async function leaseCapability() {
 }
 
 async function registerStaticTools() {
-  if(!document.modelContext?.registerTool)return;
+  const agentStatus=$("#agent-status");
+  if(!document.modelContext?.registerTool){agentStatus.dataset.state="browsing";agentStatus.querySelector("b").textContent="Browsing mode";agentStatus.querySelector("span").textContent="Open Intent in a WebMCP-enabled client to collaborate with your agent.";return;}
+  agentStatus.dataset.state="connected";agentStatus.querySelector("b").textContent="WebMCP agent connected";agentStatus.querySelector("span").textContent="The page’s four collaboration tools are available to your agent.";
   const goalSchema={type:"object",properties:{query:{type:"string",minLength:8,maxLength:240},budget:{type:"number",minimum:1,maximum:10000},country:{type:"string",pattern:"^[A-Z]{2}$",default:"US"},minimumRating:{type:"number",minimum:0,maximum:5,default:0},minimumReviews:{type:"integer",minimum:0,maximum:1000000,default:0}},required:["query","budget","country","minimumRating","minimumReviews"],additionalProperties:false};
   const tools=[
     {name:"intent_propose_purchase_mandate",description:"Propose bounded shopping rules, search live UCP offers, and open Intent's shared human-editable decision room. This cannot select an offer, grant authority, or create a cart.",inputSchema:goalSchema,async execute(input){const goal=validateGoal({query:input.query,budget:input.budget,country:input.country});const payload=await runSearch({goal,preferences:{minimumRating:input.minimumRating,minimumReviews:input.minimumReviews}});return{content:[{type:"text",text:`Intent opened mandate v1 with ${state.offers.filter((offer)=>evaluateOffer(offer,state.mandate).eligible).length} eligible and ${state.offers.filter((offer)=>!evaluateOffer(offer,state.mandate).eligible).length} blocked live offers. Compare the candidates, then stage one eligible offer under mandate v1 for human review. No checkout authority exists.`}],mandate:state.mandate,offers:state.offers.map(offerSummary),source:payload.source};}},

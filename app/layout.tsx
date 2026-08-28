@@ -3,7 +3,7 @@ import "./sites.css";
 
 export const metadata: Metadata = {
   title: "Intent — Human-approved authority for agentic shopping",
-  description: "A shared WebMCP decision room that turns human shopping rules into narrow, expiring, server-enforced agent authority."
+  description: "Intent turns human approval into narrow, expiring, server-enforced authority for agentic shopping."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
