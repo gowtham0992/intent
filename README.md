@@ -121,7 +121,7 @@ WebMCP is the agent-to-page interface. UCP is the commerce interoperability rail
 | <code>intent_propose_purchase_mandate</code> | Page load | Creates the mandate, searches live UCP offers, and opens the decision room |
 | <code>intent_compare_candidates</code> | Page load | Returns every deterministic check and numeric delta for every candidate |
 | <code>intent_read_purchase_mandate</code> | Page load | Reads the current mandate, proposal, provenance, and reason-coded capability lifecycle |
-| <code>intent_stage_candidate_for_approval</code> | Page load | Stages one eligible offer under the exact current mandate version |
+| <code>intent_stage_candidate_for_approval</code> | Page load | Stages one eligible offer, opens human review, and waits so a grant can resume the same agent turn |
 | <code>intent_open_approved_checkout_once</code> | Human-granted for at most 60 seconds | Revalidates and returns one exact merchant checkout, then disappears |
 
 The first four tools cannot create a cart or grant authority. The fifth tool does not exist until the person approves the staged proposal.

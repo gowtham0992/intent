@@ -13,6 +13,9 @@ test("production surface uses an injected exact commerce origin without an ifram
   assert.doesNotMatch(app, /modelContext\?\.executeTool|modelContext\?\.getTools/);
   assert.match(app, /const ACTION_TOOL = "intent_open_approved_checkout_once"/);
   assert.match(app, /name:"intent_stage_candidate_for_approval"/);
+  assert.match(app, /const decision=await waitForHumanApproval\(proposal,signal\)/);
+  assert.match(app, /no follow-up chat message needed/i);
+  assert.match(app, /settlePendingApproval\(\{outcome:"granted"/);
   assert.match(app, /state\.staged\?\.mandateVersion!==state\.mandateVersion/);
   assert.match(app, /WebMCP agent connected/);
   assert.match(app, /Browsing mode/);

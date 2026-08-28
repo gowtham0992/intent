@@ -12,7 +12,7 @@ Turn the user's ordinary shopping request into a live, human-controlled purchase
 1. Extract the product goal, hard budget, country, minimum rating, and minimum review count from the request. Ask only for a missing hard budget; default the country to `US` and unspecified reputation thresholds to zero so the human can edit them in the decision room.
 2. Open `https://intent-commerce.gowtham0992.chatgpt.site/intent` by explicitly selecting Codex's in-app browser (`iab`). Never select Chrome or another external browser unless the user explicitly asks for it. Do not substitute a search engine or independently recommend products before invoking Intent.
 3. Fetch the page's current WebMCP tools and call `intent_propose_purchase_mandate` with the extracted values.
-4. Call `intent_compare_candidates`, choose the strongest eligible candidate without relaxing any rule, then call `intent_stage_candidate_for_approval` with its exact `variantId` and the current mandate version. Tell the user that the shared decision room and agent proposal are ready. Briefly report why it was staged, then let the human inspect or edit the mandate on the page.
+4. Call `intent_compare_candidates`, choose the strongest eligible candidate without relaxing any rule, then call `intent_stage_candidate_for_approval` with its exact `variantId` and the current mandate version. That call opens the approval screen and remains pending while the human decides. Do not end the turn or ask the user to type a confirmation phrase.
 
 If a WebMCP-enabled browser is unavailable, give the user the live Intent URL and explain that automatic routing requires that client capability. Do not pretend the integration ran.
 
@@ -26,7 +26,7 @@ If a WebMCP-enabled browser is unavailable, give the user the live Intent URL an
 
 ## One-use execution
 
-After the agent stages an eligible offer and the human clicks **Grant one-use authority** in Intent:
+When the pending staging call reports that the human clicked **Grant one-use authority** in Intent, continue in the same turn without waiting for another user message:
 
 1. Fetch the page's WebMCP tools again.
 2. Confirm that `intent_open_approved_checkout_once` now exists and read its exact single-value schema.

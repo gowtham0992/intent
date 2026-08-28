@@ -6,6 +6,7 @@ import { appendActivity } from "./lib/activity.js";
 import { summarizeComparison } from "./lib/comparison.js";
 import { CAPABILITY_REASONS, capabilityReasonForExecutionError, createCapabilityLedger, snapshotCapability, transitionCapability } from "./lib/capability-state.js";
 import { commerceErrorFromResponse } from "./lib/commerce-error.js";
+import { createApprovalHandshake } from "./lib/approval-handshake.js";
 
 const $ = (selector) => document.querySelector(selector);
 const ACTION_TOOL = "intent_open_approved_checkout_once";
@@ -19,7 +20,7 @@ function configuredOrigin() {
 }
 
 const commerceOrigin = configuredOrigin();
-const state = { goal:null, mandate:null, mandateVersion:1, offers:[], selected:null, staged:null, activity:[], comparedVersions:new Set(), authority:"absent", capability:createCapabilityLedger(ACTION_TOOL), grant:null, controller:null, timeout:null, countdown:null, busy:false };
+const state = { goal:null, mandate:null, mandateVersion:1, offers:[], selected:null, staged:null, activity:[], comparedVersions:new Set(), authority:"absent", capability:createCapabilityLedger(ACTION_TOOL), grant:null, controller:null, timeout:null, countdown:null, pendingApproval:null, busy:false };
 const els = {
   hero:$("#hero"), market:$("#market"), authority:$("#authority"), receipt:$("#receipt"), form:$("#goal-form"), goal:$("#goal"), budget:$("#budget"), country:$("#country"), minimumRating:$("#minimum-rating"), minimumReviews:$("#minimum-reviews"), mandateRating:$("#mandate-rating"), mandateReviews:$("#mandate-reviews"),
   grid:$("#offers-grid"), dock:$("#selection-dock"), searchButton:$("#goal-form button"), lease:$("#lease-button"), approvalState:$("#approval-state"), leaseCount:$("#lease-count"),
@@ -101,6 +102,27 @@ function selectOffer(offer,{agentStaged=false}={}) {
   setAuthority("absent",{reason:agentStaged?CAPABILITY_REASONS.HUMAN_GRANT_REQUIRED:CAPABILITY_REASONS.AGENT_STAGING_REQUIRED,actor:agentStaged?"agent":"human"});
 }
 
+function settlePendingApproval(result) {
+  return state.pendingApproval?.handshake.settle(result)??false;
+}
+
+async function waitForHumanApproval(proposal,signal) {
+  settlePendingApproval({outcome:"superseded",detail:"A newer agent proposal replaced this approval request."});
+  const handshake=createApprovalHandshake({signal});
+  const pending=Object.freeze({handshake,proposal});
+  state.pendingApproval=pending;
+  try{return await handshake.promise;}
+  finally{if(state.pendingApproval===pending)state.pendingApproval=null;}
+}
+
+function stagedApprovalResult(proposal,decision) {
+  const granted=decision.outcome==="granted";
+  const text=granted
+    ? `The human granted one-use authority for ${proposal.offer.title}. The dynamic tool ${ACTION_TOOL} is live now. Refresh the page's WebMCP tools and invoke it immediately with its exact frozen schema; do not ask the human for another message.`
+    : `The staged proposal did not receive authority (${decision.outcome}). ${decision.detail??"No checkout capability exists."}`;
+  return {content:[{type:"text",text}],proposal:{mandateVersion:proposal.mandateVersion,offer:offerSummary(proposal.offer)},humanDecision:decision,authority:snapshotCapability(state.capability),nextAction:granted?{actor:"agent",action:"refresh_tools_and_execute",tool:ACTION_TOOL}:{actor:"agent",action:"report_without_checkout"}};
+}
+
 function renderMarket(payload) {
   $("#brief-query").textContent=state.goal.query; $("#brief-budget").textContent=money(Math.round(state.goal.budget*100),"USD"); $("#brief-country").textContent=state.goal.country;
   $("#catalog-count").textContent=`${payload.totalCount.toLocaleString()} live matches · showing ${state.offers.length}`;
@@ -115,6 +137,7 @@ async function runSearch(input=null) {
   const previous=els.searchButton.querySelector("span").textContent;
   try {
     const proposal=input??readProposal();
+    settlePendingApproval({outcome:"superseded",detail:"A new shopping search replaced the staged proposal."});
     state.activity=[];state.comparedVersions.clear();renderActivity();state.goal=validateGoal(proposal.goal??proposal); state.mandate=createMandate(state.goal,proposal.preferences??{minimumRating:proposal.minimumRating,minimumReviews:proposal.minimumReviews});state.mandateVersion=1; revoke("absent");resetCapabilityLedger();
     els.searchButton.disabled=true; els.searchButton.querySelector("span").textContent="Searching live merchants";
     const payload=await commerce("/v1/search",state.goal);
@@ -132,7 +155,7 @@ function applyMandate() {
   try {
     const previous=state.mandate;const previousStage=state.staged;
     const next=validateMandate({maxAmountMinor:state.mandate.maxAmountMinor,currency:state.mandate.currency,minimumRating:Number(els.mandateRating.value),minimumReviews:Number(els.mandateReviews.value)});
-    state.mandate=next;state.mandateVersion+=1;revoke("absent",{reason:previousStage?CAPABILITY_REASONS.INVALIDATED_BY_MANDATE_VERSION:CAPABILITY_REASONS.AGENT_STAGING_REQUIRED,actor:"human"});state.selected=null;state.staged=null;els.dock.hidden=true;
+    state.mandate=next;state.mandateVersion+=1;revoke("absent",{reason:previousStage?CAPABILITY_REASONS.INVALIDATED_BY_MANDATE_VERSION:CAPABILITY_REASONS.AGENT_STAGING_REQUIRED,actor:"human"});settlePendingApproval({outcome:"invalidated",detail:`The human changed the mandate to v${state.mandateVersion}; compare and stage again.`});state.selected=null;state.staged=null;els.dock.hidden=true;
     const eligible=state.offers.filter((offer)=>evaluateOffer(offer,state.mandate).eligible).length;
     $("#offers-summary").textContent=`${eligible} eligible · ${state.offers.length-eligible} blocked · not cached`;$("#mandate-version").textContent=`v${state.mandateVersion}`;
     els.grid.replaceChildren(...state.offers.map(renderOffer));
@@ -236,11 +259,11 @@ async function leaseCapability() {
         }catch(error){const reason=capabilityReasonForExecutionError(error.code);const terminalState=reason===CAPABILITY_REASONS.EXPIRED_UNUSED?"expired":"used";revoke(terminalState,{reason,actor:"server",errorCode:error.code});addActivity({actor:"intent",title:"Execution failed closed",detail:error.message});$("#authority-copy").textContent=`The attempt failed closed and authority was removed: ${error.message}`;els.lease.disabled=false;toast("Handoff failed closed",error.message,true);throw error;}
       }
     },{signal:controller.signal});
-    setAuthority("live",{reason:CAPABILITY_REASONS.HUMAN_GRANTED,actor:"human"});addActivity({actor:"you",title:"Granted one-use authority",detail:`Mandate v${state.mandateVersion} · expires in 60 seconds`});els.lease.textContent="Capability live — ask your agent";$("#authority-copy").textContent=`Mandate v${state.mandateVersion} is now visible to your agent and frozen to this eligible offer and its rules. Ask your agent to call ${ACTION_TOOL}. The server rejects replay after one use or sixty seconds.`;
+    setAuthority("live",{reason:CAPABILITY_REASONS.HUMAN_GRANTED,actor:"human"});addActivity({actor:"you",title:"Granted one-use authority",detail:`Mandate v${state.mandateVersion} · expires in 60 seconds`});els.lease.textContent="Capability live — agent continuing";$("#authority-copy").textContent=`Mandate v${state.mandateVersion} is frozen to this exact offer. Your waiting agent has been released and can continue automatically; no follow-up message is needed.`;settlePendingApproval({outcome:"granted",leaseId:scope.leaseId,detail:`${ACTION_TOOL} is live for one server-checked use.`});
     let remaining=60;state.countdown=setInterval(()=>{remaining-=1;els.leaseCount.textContent=String(Math.max(0,remaining));},1000);
     state.timeout=setTimeout(()=>{if(state.authority!=="live")return;revoke("expired",{reason:CAPABILITY_REASONS.EXPIRED_UNUSED,actor:"intent"});addActivity({actor:"intent",title:"Authority expired unused",detail:"No checkout was opened"});els.leaseCount.textContent="0";els.lease.disabled=false;els.lease.textContent="Grant one-use authority →";$("#authority-copy").textContent="The lease expired unused. No cart was opened and the capability is gone.";toast("Lease expired","No action was taken.");},LEASE_MS);
-    toast("One-use capability live",`Ask your agent to call ${ACTION_TOOL}.`);
-  }catch(error){revoke("absent",{reason:CAPABILITY_REASONS.LEASE_ISSUANCE_FAILED,actor:"server",errorCode:error.code});els.lease.disabled=false;toast("Capability unavailable",error.message,true);}
+    toast("Authority granted","Your agent is continuing automatically.");
+  }catch(error){revoke("absent",{reason:CAPABILITY_REASONS.LEASE_ISSUANCE_FAILED,actor:"server",errorCode:error.code});settlePendingApproval({outcome:"issuance_failed",detail:error.message,errorCode:error.code});els.lease.disabled=false;toast("Capability unavailable",error.message,true);}
   finally{state.busy=false;}
 }
 
@@ -253,19 +276,19 @@ async function registerStaticTools() {
     {name:"intent_propose_purchase_mandate",description:"Propose bounded shopping rules, search live UCP offers, and open Intent's shared human-editable decision room. This cannot select an offer, grant authority, or create a cart.",inputSchema:goalSchema,async execute(input){const goal=validateGoal({query:input.query,budget:input.budget,country:input.country});const payload=await runSearch({goal,preferences:{minimumRating:input.minimumRating,minimumReviews:input.minimumReviews}});return{content:[{type:"text",text:`Intent opened mandate v1 with ${state.offers.filter((offer)=>evaluateOffer(offer,state.mandate).eligible).length} eligible and ${state.offers.filter((offer)=>!evaluateOffer(offer,state.mandate).eligible).length} blocked live offers. Compare the candidates, then stage one eligible offer under mandate v1 for human review. No checkout authority exists.`}],mandate:state.mandate,offers:state.offers.map(offerSummary),source:payload.source};}},
     {name:"intent_compare_candidates",description:"Evaluate every live candidate against every deterministic rule in the current human-visible mandate. Returns an audit summary plus exact reasons each offer is eligible or blocked. Read-only.",inputSchema:{type:"object",properties:{},additionalProperties:false},annotations:{readOnlyHint:true},async execute(){if(!state.offers.length)return{content:[{type:"text",text:"No decision room exists. Use intent_propose_purchase_mandate first."}]};const candidates=state.offers.map(offerSummary);const audit=summarizeComparison(candidates.map(({decision})=>decision),state.mandateVersion);if(!state.comparedVersions.has(state.mandateVersion)){state.comparedVersions.add(state.mandateVersion);addActivity({actor:"agent",title:`Evaluated ${audit.candidateCount} candidates`,detail:`${audit.checkCount} deterministic checks · mandate v${audit.mandateVersion}`});}return{content:[{type:"text",text:JSON.stringify({audit,candidates},null,2)}],audit,candidates};}},
     {name:"intent_read_purchase_mandate",description:"Read the current human-edited purchase mandate, staged proposal, collaboration history, and the reason-coded lifecycle of checkout authority—including why the dynamic capability is absent and which actor owns the next step. Read-only; capability reasons are page-asserted transparency, not identity attestation.",inputSchema:{type:"object",properties:{},additionalProperties:false},annotations:{readOnlyHint:true},async execute(){const plan=currentPlan();const snapshot={goal:plan.goal,mandate:plan.mandate,selectedOffer:plan.selectedOffer,stagedProposal:plan.stagedProposal,activity:plan.activity,authority:plan.authority};return{content:[{type:"text",text:JSON.stringify(snapshot,null,2)}],snapshot};}},
-    {name:"intent_stage_candidate_for_approval",description:"Stage one eligible live candidate under the exact current mandate version for the human to review. This visibly mutates the shared decision room but cannot grant authority, mint a lease, create a cart, or submit payment.",inputSchema:{type:"object",properties:{variantId:{type:"string",minLength:1,maxLength:512},mandateVersion:{type:"integer",minimum:1}},required:["variantId","mandateVersion"],additionalProperties:false},async execute(input){const proposal=stageCandidate({offers:state.offers,mandate:state.mandate,currentVersion:state.mandateVersion,requestedVersion:input.mandateVersion,variantId:input.variantId,authority:state.authority});selectOffer(proposal.offer,{agentStaged:true});return{content:[{type:"text",text:`Staged ${proposal.offer.title} from ${proposal.offer.seller.name} under mandate v${proposal.mandateVersion}. The human can now review it. Checkout authority is still absent.`}],proposal:{mandateVersion:proposal.mandateVersion,offer:offerSummary(proposal.offer)},authority:{state:"absent",humanGrantRequired:true}};}}
+    {name:"intent_stage_candidate_for_approval",description:"Stage one eligible live candidate under the exact current mandate version, open its human approval screen, and wait for the decision in this same tool call. If the human grants, continue by refreshing tools and invoking the newly live one-use checkout capability. This tool cannot grant itself authority, create a cart, or submit payment.",inputSchema:{type:"object",properties:{variantId:{type:"string",minLength:1,maxLength:512},mandateVersion:{type:"integer",minimum:1}},required:["variantId","mandateVersion"],additionalProperties:false},async execute(input,{signal}={}){const proposal=stageCandidate({offers:state.offers,mandate:state.mandate,currentVersion:state.mandateVersion,requestedVersion:input.mandateVersion,variantId:input.variantId,authority:state.authority});selectOffer(proposal.offer,{agentStaged:true});populateApproval();$("#authority-copy").textContent="Your agent is waiting on this exact decision. Review the frozen handoff and grant once to let it continue automatically—no follow-up chat message needed.";view("authority");const decision=await waitForHumanApproval(proposal,signal);return stagedApprovalResult(proposal,decision);}}
   ];
   try{for(const tool of tools)await document.modelContext.registerTool(tool);}
   catch(error){console.error("Static WebMCP registration failed.",error);toast("WebMCP registration failed",error.message,true);}
 }
 
-function reset(){revoke("absent");state.goal=null;state.mandate=null;state.mandateVersion=1;state.offers=[];state.selected=null;state.staged=null;state.activity=[];state.comparedVersions.clear();resetCapabilityLedger();renderActivity();els.grid.replaceChildren();els.dock.hidden=true;els.lease.disabled=false;els.lease.textContent="Grant one-use authority →";$("#authority-copy").textContent="The checkout capability does not exist yet. Your click creates it for sixty seconds, frozen to this exact product, merchant, and price.";view("hero");}
+function reset(){revoke("absent");settlePendingApproval({outcome:"reset",detail:"The human ended this shopping decision."});state.goal=null;state.mandate=null;state.mandateVersion=1;state.offers=[];state.selected=null;state.staged=null;state.activity=[];state.comparedVersions.clear();resetCapabilityLedger();renderActivity();els.grid.replaceChildren();els.dock.hidden=true;els.lease.disabled=false;els.lease.textContent="Grant one-use authority →";$("#authority-copy").textContent="The checkout capability does not exist yet. Your click creates it for sixty seconds, frozen to this exact product, merchant, and price.";view("hero");}
 
 els.form.addEventListener("submit",(event)=>{event.preventDefault();runSearch().catch(()=>{});});
 $("#apply-mandate").addEventListener("click",applyMandate);
 $("#new-search").addEventListener("click",reset);
 $("#review-offer").addEventListener("click",()=>{populateApproval();view("authority");});
-$("#cancel-lease").addEventListener("click",()=>{const wasLive=state.authority==="live";if(wasLive){revoke("absent",{reason:CAPABILITY_REASONS.REVOKED_BY_HUMAN,actor:"human"});addActivity({actor:"you",title:"Withdrew live authority",detail:"Capability removed before use"});}view("market");});
+$("#cancel-lease").addEventListener("click",()=>{const wasLive=state.authority==="live";const wasPending=Boolean(state.pendingApproval);if(wasLive||wasPending){revoke("absent",{reason:CAPABILITY_REASONS.REVOKED_BY_HUMAN,actor:"human"});settlePendingApproval({outcome:"declined",detail:"The human returned to the decision room without granting authority."});addActivity({actor:"you",title:wasLive?"Withdrew live authority":"Declined checkout authority",detail:"No checkout was opened"});}view("market");});
 els.lease.addEventListener("click",leaseCapability);
 $("#reset-button").addEventListener("click",reset);
 $("#proof-button").addEventListener("click",()=>els.proof.showModal());
