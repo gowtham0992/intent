@@ -1,12 +1,12 @@
 {
   "name": "intent",
-  "version": "0.2.0",
+  "version": "0.2.0+codex.20260828032622",
   "description": "Route ordinary shopping requests from Codex into Intent's live, human-controlled WebMCP purchase flow.",
   "author": {
     "name": "Gowtham Sarveswaran",
     "url": "https://github.com/gowtham0992"
   },
-  "homepage": "https://intent-lime-five.vercel.app/",
+  "homepage": "https://intent-commerce.gowtham0992.chatgpt.site/intent",
   "repository": "https://github.com/gowtham0992/intent",
   "license": "MIT",
   "keywords": [
@@ -28,7 +28,7 @@
       "Interactive",
       "Commerce"
     ],
-    "websiteURL": "https://intent-lime-five.vercel.app/",
+    "websiteURL": "https://intent-commerce.gowtham0992.chatgpt.site/intent",
     "defaultPrompt": "Find me a reliable 65W USB-C charger for my MacBook under $60."
   }
 }
