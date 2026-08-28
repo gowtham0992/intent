@@ -19,28 +19,20 @@
   <body>
     <header class="topbar">
       <a class="brand" href="#hero" aria-label="Intent home"><img class="brand-logo" src="/assets/intent-mark-v2.png" alt=""><span>intent</span></a>
-      <div class="protocol-rail" aria-label="Protocol path"><span>Agent proposes</span><i></i><b>You decide</b><i></i><span>Intent enforces</span></div>
-      <button class="proof-button" id="proof-button" type="button"><span>14/14</span><small>boundary checks</small></button>
+      <p class="product-promise">A decision room for human-approved agent commerce</p>
+      <div class="topbar-actions"><span class="webmcp-pill"><i></i> WebMCP</span><button class="proof-button" id="proof-button" type="button"><span>14/14</span><small>boundary checks</small></button></div>
     </header>
 
-    <main>
+    <main class="workspace">
       <section class="view hero is-active" id="hero">
         <div class="hero-grid">
           <div class="hero-message">
-            <p class="eyebrow">Live agentic shopping · governed by you</p>
-            <h1>Your agent shops.<br><em>You call the shots.</em></h1>
-            <p class="hero-copy">Real products. Live merchants. One checkout capability that can open exactly what you approved—once.</p>
-            <div class="hero-proof">
-              <span><i></i> Live inventory</span><span><i></i> No store account</span><span><i></i> No payment submitted</span>
-            </div>
-          </div>
-          <div class="permission-play" aria-label="An agent proposes, a person approves, and Intent makes one narrow capability available">
-            <div class="play-card agent-card"><span>01 / Agent</span><b>I found the match.</b><small>Six merchants · checked live</small></div>
-            <div class="permission-track"><span class="permission-token">1×</span></div>
-            <div class="play-card human-card"><span>02 / You</span><b>Under $60. 4.5★ minimum.</b><small>Nothing moves until you say so</small></div>
-            <div class="capability-ticket"><span>03 / Intent</span><b>ABSENT → LIVE → GONE</b><small>Scope frozen · replay blocked</small></div>
+            <p class="eyebrow">Live commerce · explicit authority</p>
+            <h1>Shop with<br><em>intent.</em></h1>
+            <p class="hero-copy">Your agent finds and compares real products. You set the rules. Intent exposes one exact checkout capability only after you approve it.</p>
           </div>
           <div class="search-zone">
+          <div class="search-intro"><span>Start a purchase mandate</span><small>Search yourself, or ask your agent from chat.</small></div>
           <form class="search-shell" id="goal-form">
             <div class="search-main">
               <span class="prompt-glyph" aria-hidden="true">↗</span>
@@ -59,16 +51,25 @@
             <i aria-hidden="true"></i>
             <div><b>Checking agent connection</b><span>Intent works best in a WebMCP-enabled client.</span></div>
           </div>
+          <div class="hero-proof">
+            <span><i></i> Live Shopify catalog</span><span><i></i> No store account</span><span><i></i> Payment stays human</span>
+          </div>
+          </div>
+          <div class="mechanism-strip" aria-label="Intent capability lifecycle">
+            <div><span>01</span><b>Agent proposes</b><small>Live offers, checked against your rules</small></div>
+            <i aria-hidden="true">→</i>
+            <div><span>02</span><b>You approve</b><small>Exact product, merchant, price, and quantity</small></div>
+            <i aria-hidden="true">→</i>
+            <div><span>03</span><b>Intent enforces</b><small>One use, 60 seconds, then gone</small></div>
           </div>
         </div>
-        <div class="hero-marquee" aria-hidden="true"><span>PROPOSE</span><i>●</i><span>BOUND</span><i>●</i><span>GRANT</span><i>●</i><span>OPEN ONCE</span><i>●</i><span>DISAPPEAR</span></div>
       </section>
 
       <section class="view market" id="market" aria-live="polite">
         <div class="market-head">
           <div>
             <p class="eyebrow dark">Shared decision room</p>
-            <h2>Your agent proposed.<br><em>You decide.</em></h2>
+            <h2>Live decision room</h2>
           </div>
           <button class="text-button" id="new-search" type="button">← New search</button>
         </div>
@@ -106,31 +107,6 @@
         </div>
       </section>
 
-      <section class="view authority" id="authority" aria-live="assertive">
-        <div class="authority-grid">
-          <div class="authority-copy">
-            <p class="eyebrow">Human authority required</p>
-            <h2>One mandate.<br>One use.<br><em>Then gone.</em></h2>
-            <p id="authority-copy">The checkout capability does not exist yet. Your click creates it for sixty seconds, frozen to this exact product, merchant, and price.</p>
-            <div class="lease-clock"><span id="lease-count">60</span><small>second lease</small></div>
-          </div>
-          <article class="approval-card">
-            <div class="approval-top"><span>Exact handoff contract</span><b id="approval-state">ABSENT</b></div>
-            <img id="approval-image" alt="">
-            <div class="approval-product"><div><small id="approval-seller">—</small><h3 id="approval-title">—</h3></div><strong id="approval-price">—</strong></div>
-            <dl>
-              <div><dt>Agent may</dt><dd>Open this exact merchant cart</dd></div>
-              <div><dt>Mandate</dt><dd id="approval-mandate">—</dd></div>
-              <div><dt>Agent may not</dt><dd>Change item, price, or quantity</dd></div>
-              <div><dt>Payment</dt><dd>Not submitted · remains human</dd></div>
-              <div><dt>Lifecycle</dt><dd id="approval-lifecycle">Absent · awaiting your one-use grant</dd></div>
-            </dl>
-            <div class="approval-actions"><button class="secondary-button light" id="cancel-lease" type="button">Back</button><button class="lime-button" id="lease-button" type="button">Grant one-use authority <span>→</span></button></div>
-            <p class="capability-name">Dynamic tool · <code>intent_open_approved_checkout_once</code></p>
-          </article>
-        </div>
-      </section>
-
       <section class="view receipt" id="receipt" aria-live="polite">
         <div class="receipt-copy">
           <div class="success-mark">✓</div>
@@ -158,6 +134,37 @@
         </div>
       </section>
     </main>
+
+    <section class="authority" id="authority" aria-live="assertive" data-ready="false">
+      <div class="authority-grid">
+        <div class="authority-head">
+          <div><p class="eyebrow">Checkout authority</p><h2 id="authority-heading">No capability exists</h2></div>
+          <b id="approval-state" data-state="absent">ABSENT</b>
+        </div>
+        <div class="lifecycle-track" aria-label="Checkout capability lifecycle"><span class="is-current">Absent</span><i></i><span>Live</span><i></i><span>Gone</span></div>
+        <div class="authority-copy">
+          <p id="authority-copy">Your agent can search and compare. It cannot open a checkout until it stages one eligible offer and you grant a one-use capability.</p>
+          <div class="lease-clock"><span id="lease-count">60</span><small>seconds</small></div>
+        </div>
+        <article class="approval-card">
+          <div class="empty-authority"><span>↗</span><b>Nothing staged</b><small>The agent—not this page—must stage an eligible offer for your review.</small></div>
+          <div class="approval-contract">
+            <img id="approval-image" alt="">
+            <div class="approval-product"><div><small id="approval-seller">—</small><h3 id="approval-title">—</h3></div><strong id="approval-price">—</strong></div>
+            <dl>
+              <div><dt>Agent may</dt><dd>Open this exact merchant cart</dd></div>
+              <div><dt>Mandate</dt><dd id="approval-mandate">—</dd></div>
+              <div><dt>Frozen scope</dt><dd>Item · seller · price · quantity 1</dd></div>
+              <div><dt>Payment</dt><dd>Not submitted · remains human</dd></div>
+              <div><dt>Lifecycle</dt><dd id="approval-lifecycle">Absent · agent staging required</dd></div>
+            </dl>
+            <div class="approval-actions"><button class="secondary-button light" id="cancel-lease" type="button">Decline</button><button class="lime-button" id="lease-button" type="button" disabled>Grant one-use authority <span>→</span></button></div>
+          </div>
+          <p class="capability-name">Dynamic WebMCP tool<br><code>intent_open_approved_checkout_once</code></p>
+        </article>
+        <div class="rail-note"><i></i><span>Scope, replay, expiry, and live price are enforced server-side.</span></div>
+      </div>
+    </section>
 
     <dialog id="proof-dialog">
       <div class="dialog-head"><div><p class="eyebrow dark">Deterministic evaluation</p><h2>Evidence, not vibes.</h2></div><button id="proof-close" class="icon-button" aria-label="Close">×</button></div>

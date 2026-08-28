@@ -46,7 +46,8 @@ function money(amountMinor, currency) {
 }
 
 function view(name) {
-  for (const [key,element] of Object.entries({hero:els.hero,market:els.market,authority:els.authority,receipt:els.receipt})) element.classList.toggle("is-active",key===name);
+  const mainView=name==="authority"?(state.offers.length?"market":"hero"):name;
+  for (const [key,element] of Object.entries({hero:els.hero,market:els.market,receipt:els.receipt})) element.classList.toggle("is-active",key===mainView);
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
@@ -168,6 +169,8 @@ function applyMandate() {
 
 function populateApproval() {
   const offer=state.selected;if(!offer)return;
+  els.authority.dataset.ready="true";
+  els.lease.disabled=false;
   $("#approval-title").textContent=offer.title;$("#approval-seller").textContent=offer.seller.name;$("#approval-price").textContent=money(offer.price.amountMinor,offer.price.currency);
   const image=$("#approval-image");image.src=offer.image?.url??"/assets/intent-mark-v2.png";image.alt=offer.image?.alt??offer.title;
   $("#approval-mandate").textContent=`≤ ${money(state.mandate.maxAmountMinor,state.mandate.currency)} · ≥ ${state.mandate.minimumRating.toFixed(1)}★ · ≥ ${state.mandate.minimumReviews} reviews`;
@@ -197,12 +200,29 @@ const CAPABILITY_COPY = Object.freeze({
 function renderCapabilityState() {
   const capability=snapshotCapability(state.capability);const copy=CAPABILITY_COPY[capability.reason];
   if(els.approvalLifecycle)els.approvalLifecycle.textContent=copy;
+  const heading=$("#authority-heading");
+  if(heading)heading.textContent={
+    [CAPABILITY_REASONS.MANDATE_REQUIRED]:"No capability exists",
+    [CAPABILITY_REASONS.AGENT_STAGING_REQUIRED]:"No capability exists",
+    [CAPABILITY_REASONS.HUMAN_GRANT_REQUIRED]:"Awaiting your approval",
+    [CAPABILITY_REASONS.HUMAN_GRANTED]:"One-use capability live",
+    [CAPABILITY_REASONS.CONSUMED]:"Authority consumed",
+    [CAPABILITY_REASONS.EXPIRED_UNUSED]:"Authority expired unused",
+    [CAPABILITY_REASONS.REVOKED_BY_HUMAN]:"Authority revoked",
+    [CAPABILITY_REASONS.INVALIDATED_BY_MANDATE_VERSION]:"Proposal invalidated",
+    [CAPABILITY_REASONS.REJECTED_BY_REVALIDATION]:"Offer changed · blocked",
+    [CAPABILITY_REASONS.LEASE_ISSUANCE_FAILED]:"Capability unavailable",
+    [CAPABILITY_REASONS.EXECUTION_FAILED_CLOSED]:"Execution blocked"
+  }[capability.reason]??"Checkout authority";
+  const lifecycle=$(".lifecycle-track");
+  if(lifecycle){const position=capability.state==="live"?1:["used","expired"].includes(capability.state)?2:0;[...lifecycle.querySelectorAll("span")].forEach((item,index)=>item.classList.toggle("is-current",index===position));}
   if(els.receiptCapabilityReason){els.receiptCapabilityReason.textContent=capability.reason.toUpperCase();els.receiptCapabilityReason.dataset.reason=capability.reason;}
   if(els.receiptCapabilityNext){const next=capability.nextStep;els.receiptCapabilityNext.textContent=`Next: ${next.actor} · ${next.action.replaceAll("_"," ")}`;}
 }
 
 function setAuthority(nextState,event=null) {
   state.authority=nextState;
+  els.authority.dataset.terminal=String(["used","expired"].includes(nextState));
   if(event)state.capability=transitionCapability(state.capability,{...event,state:nextState,mandateVersion:event.mandateVersion??(state.mandate?state.mandateVersion:null)});
   if(els.approvalState){els.approvalState.textContent=nextState==="live"?"LIVE · ONE USE":nextState.toUpperCase();els.approvalState.dataset.state=nextState;}
   renderCapabilityState();
@@ -254,12 +274,12 @@ async function leaseCapability() {
       async execute(input){
         try{
           const authorized=state.grant?.consume(input);if(!authorized)throw new Error("Authority is no longer live.");
-          const payload=await commerce("/v1/checkout-handoff",authorized);addActivity({actor:"agent",title:"Opened exact checkout",detail:`${payload.handoff.seller.name} · ${money(payload.handoff.price.amountMinor,payload.handoff.price.currency)}`});revoke("used",{reason:CAPABILITY_REASONS.CONSUMED,actor:"agent"});addActivity({actor:"intent",title:"Consumed one-use authority",detail:"Replay is blocked server-side"});renderReceipt(payload.handoff);toast("Checkout handoff ready","Authority consumed. Payment was not submitted.");
+          const payload=await commerce("/v1/checkout-handoff",authorized);addActivity({actor:"agent",title:"Opened exact checkout",detail:`${payload.handoff.seller.name} · ${money(payload.handoff.price.amountMinor,payload.handoff.price.currency)}`});revoke("used",{reason:CAPABILITY_REASONS.CONSUMED,actor:"agent"});addActivity({actor:"intent",title:"Consumed one-use authority",detail:"Replay is blocked server-side"});els.leaseCount.textContent="0";els.lease.textContent="Capability consumed";$("#authority-copy").textContent="The live offer was revalidated and the merchant handoff was returned. The one-use capability is gone and replay is blocked.";renderReceipt(payload.handoff);toast("Checkout handoff ready","Authority consumed. Payment was not submitted.");
           return {content:[{type:"text",text:`Exact offer revalidated. No payment was submitted. Merchant checkout: ${payload.handoff.checkoutUrl}`}],handoff:payload.handoff,authority:snapshotCapability(state.capability)};
         }catch(error){const reason=capabilityReasonForExecutionError(error.code);const terminalState=reason===CAPABILITY_REASONS.EXPIRED_UNUSED?"expired":"used";revoke(terminalState,{reason,actor:"server",errorCode:error.code});addActivity({actor:"intent",title:"Execution failed closed",detail:error.message});$("#authority-copy").textContent=`The attempt failed closed and authority was removed: ${error.message}`;els.lease.disabled=false;toast("Handoff failed closed",error.message,true);throw error;}
       }
     },{signal:controller.signal});
-    setAuthority("live",{reason:CAPABILITY_REASONS.HUMAN_GRANTED,actor:"human"});addActivity({actor:"you",title:"Granted one-use authority",detail:`Mandate v${state.mandateVersion} · expires in 60 seconds`});els.lease.textContent="Capability live — agent continuing";$("#authority-copy").textContent=`Mandate v${state.mandateVersion} is frozen to this exact offer. Your waiting agent has been released and can continue automatically; no follow-up message is needed.`;settlePendingApproval({outcome:"granted",leaseId:scope.leaseId,detail:`${ACTION_TOOL} is live for one server-checked use.`});
+    setAuthority("live",{reason:CAPABILITY_REASONS.HUMAN_GRANTED,actor:"human"});addActivity({actor:"you",title:"Granted one-use authority",detail:`Mandate v${state.mandateVersion} · expires in 60 seconds`});els.lease.textContent="Waiting for your agent";$("#authority-copy").textContent=`Mandate v${state.mandateVersion} is frozen to this exact offer. Your waiting agent has been released and can continue automatically; no follow-up message is needed.`;settlePendingApproval({outcome:"granted",leaseId:scope.leaseId,detail:`${ACTION_TOOL} is live for one server-checked use.`});
     let remaining=60;state.countdown=setInterval(()=>{remaining-=1;els.leaseCount.textContent=String(Math.max(0,remaining));},1000);
     state.timeout=setTimeout(()=>{if(state.authority!=="live")return;revoke("expired",{reason:CAPABILITY_REASONS.EXPIRED_UNUSED,actor:"intent"});addActivity({actor:"intent",title:"Authority expired unused",detail:"No checkout was opened"});els.leaseCount.textContent="0";els.lease.disabled=false;els.lease.textContent="Grant one-use authority →";$("#authority-copy").textContent="The lease expired unused. No cart was opened and the capability is gone.";toast("Lease expired","No action was taken.");},LEASE_MS);
     toast("Authority granted","Your agent is continuing automatically.");
@@ -282,7 +302,7 @@ async function registerStaticTools() {
   catch(error){console.error("Static WebMCP registration failed.",error);toast("WebMCP registration failed",error.message,true);}
 }
 
-function reset(){revoke("absent");settlePendingApproval({outcome:"reset",detail:"The human ended this shopping decision."});state.goal=null;state.mandate=null;state.mandateVersion=1;state.offers=[];state.selected=null;state.staged=null;state.activity=[];state.comparedVersions.clear();resetCapabilityLedger();renderActivity();els.grid.replaceChildren();els.dock.hidden=true;els.lease.disabled=false;els.lease.textContent="Grant one-use authority →";$("#authority-copy").textContent="The checkout capability does not exist yet. Your click creates it for sixty seconds, frozen to this exact product, merchant, and price.";view("hero");}
+function reset(){revoke("absent");settlePendingApproval({outcome:"reset",detail:"The human ended this shopping decision."});state.goal=null;state.mandate=null;state.mandateVersion=1;state.offers=[];state.selected=null;state.staged=null;state.activity=[];state.comparedVersions.clear();resetCapabilityLedger();renderActivity();els.grid.replaceChildren();els.dock.hidden=true;els.authority.dataset.ready="false";els.lease.disabled=true;els.lease.textContent="Grant one-use authority →";$("#authority-copy").textContent="Your agent can search and compare. It cannot open a checkout until it stages one eligible offer and you grant a one-use capability.";view("hero");}
 
 els.form.addEventListener("submit",(event)=>{event.preventDefault();runSearch().catch(()=>{});});
 $("#apply-mandate").addEventListener("click",applyMandate);
