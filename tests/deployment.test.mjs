@@ -26,6 +26,9 @@ test("production surface uses an injected exact commerce origin without an ifram
   assert.match(app, /Searching live merchants/);
   assert.match(app, /Applying mandate rules/);
   assert.match(app, /Ranking eligible offers/);
+  assert.equal(app.match(/untrustedContentHint:true/g)?.length, 5);
+  assert.match(app, /via WebMCP/);
+  assert.match(app, /readback:mutationReadback\(\)/);
   assert.doesNotMatch(app, /fake progress|\d+% complete/i);
   assert.doesNotMatch(html, /Universal agentic commerce|impossible to quietly exceed/i);
   assert.doesNotMatch(build, /INTENT_VAULT_ORIGIN/);

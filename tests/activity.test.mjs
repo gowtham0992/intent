@@ -34,3 +34,18 @@ test("merchant-supplied labels are bounded without breaking the product flow", (
   assert.equal(history[0].title.length, 100);
   assert.match(history[0].title, /^Staged x+/);
 });
+
+test("agent activity can expose validated WebMCP tool provenance", () => {
+  const history = appendActivity([], {
+    actor: "agent",
+    title: "Staged Anker",
+    detail: "Mandate v2",
+    tool: "intent_stage_candidate_for_approval"
+  });
+
+  assert.equal(history[0].tool, "intent_stage_candidate_for_approval");
+  assert.throws(
+    () => appendActivity([], { actor: "agent", title: "Bad", detail: "Observed", tool: "<script>" }),
+    /tool/i
+  );
+});

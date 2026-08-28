@@ -94,11 +94,14 @@ Intent uses WebMCP as a runtime authority surface, not merely as a structured co
 
 - **Progressive discovery:** the four collaboration tools register when the agent visits the page; no site-specific API integration is required.
 - **Shared state:** the agent reads and mutates the same versioned decision artifact the person sees.
+- **Visible provenance:** agent-authored ledger entries name the WebMCP tool that produced them, while human and system events remain visually distinct.
 - **Agent-only actions:** comparison matrices, proposal staging, and checkout invocation are structured agent operations rather than duplicated buttons.
 - **Dynamic authority:** the checkout tool is registered only after a human click and revoked through <code>AbortController</code> after use, cancellation, failure, or expiry.
 - **Explainable disappearance:** the permanent read tool reports why checkout authority is absent, who owns the next step, and the bounded transition history—even after the temporary tool is gone.
 - **Inspectable scope:** every field in the temporary tool's input schema is frozen to a single allowed value.
 - **Independent enforcement:** the schema communicates the contract, while the Worker and Durable Object enforce it against live external state.
+- **Untrusted-data signaling:** every tool that can return merchant-controlled catalog content sets WebMCP's <code>untrustedContentHint</code> so capable clients can apply heightened handling.
+- **Verifiable mutations:** mutating tools return a canonical mandate version, authority state, and reason alongside their primary result.
 
 Without WebMCP, Intent would be a shopping page with a guarded checkout button. With WebMCP, the page can change what the visiting agent is capable of doing during the session.
 
@@ -174,7 +177,7 @@ npm run check   # syntax checks plus the full test suite
 npm run build   # create the static dist/ output
 ~~~
 
-The suite currently contains 36 top-level tests, including a 14-case boundary matrix, reason-coded lifecycle transitions, mandate-version invalidation, atomic replay rejection, scope-widening rejection, live price revalidation, untrusted-error sanitization, and production configuration checks.
+The suite currently contains 42 top-level tests, including a 14-case boundary matrix, reason-coded lifecycle transitions, mandate-version invalidation, atomic replay rejection, scope-widening rejection, live price revalidation, untrusted-output signaling, mutation read-backs, tool provenance validation, and production configuration checks.
 
 ## Deploy your own instance
 
