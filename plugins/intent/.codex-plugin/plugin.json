@@ -1,6 +1,6 @@
 {
   "name": "intent",
-  "version": "0.2.0+codex.20260828033025",
+  "version": "0.2.0+codex.20260828034650",
   "description": "Route ordinary shopping requests from Codex into Intent's live, human-controlled WebMCP purchase flow.",
   "author": {
     "name": "Gowtham Sarveswaran",
@@ -28,9 +28,9 @@
       "Interactive",
       "Commerce"
     ],
-    "brandColor": "#B8FF24",
-    "composerIcon": "./assets/intent-icon.png",
-    "logo": "./assets/intent-icon.png",
+    "brandColor": "#C8FF2E",
+    "composerIcon": "./assets/intent-mark-v2.png",
+    "logo": "./assets/intent-mark-v2.png",
     "websiteURL": "https://intent-commerce.gowtham0992.chatgpt.site/intent",
     "defaultPrompt": "Find me a reliable 65W USB-C charger for my MacBook under $60."
   }

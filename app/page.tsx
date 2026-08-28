@@ -9,7 +9,7 @@ export default function Home() {
 
   return (
     <main className="sites-handoff" aria-live="polite">
-      <img src="/assets/intent-wordmark.png" alt="Intent" />
+      <img src="/assets/intent-mark-v2.png" alt="Intent" />
       <p>Opening the agentic commerce decision room…</p>
     </main>
   );

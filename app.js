@@ -72,7 +72,7 @@ function renderOffer(offer,index) {
   const decision=evaluateOffer(offer,state.mandate);
   const button=document.createElement("button"); button.type="button"; button.className=`offer-card ${decision.eligible?"eligible":"blocked"}`; button.dataset.variantId=offer.variantId; button.setAttribute("aria-label",`${decision.eligible?"Eligible":"Blocked"}: ${offer.title} from ${offer.seller.name}`);
   const rank=document.createElement("span"); rank.className="offer-rank"; rank.textContent=decision.eligible?(index===0?"Eligible · best match":"Eligible"):"Blocked";
-  const image=document.createElement("img"); image.className="offer-image"; image.loading="lazy"; image.referrerPolicy="no-referrer"; image.src=offer.image?.url??"/assets/intent-icon.png"; image.alt=offer.image?.alt??offer.title;
+  const image=document.createElement("img"); image.className="offer-image"; image.loading="lazy"; image.referrerPolicy="no-referrer"; image.src=offer.image?.url??"/assets/intent-mark-v2.png"; image.alt=offer.image?.alt??offer.title;
   const body=document.createElement("div"); body.className="offer-body";
   const seller=document.createElement("p"); seller.className="offer-seller"; seller.textContent=offer.seller.name;
   const title=document.createElement("h3"); title.textContent=offer.title;
@@ -169,7 +169,7 @@ function applyMandate() {
 function populateApproval() {
   const offer=state.selected;if(!offer)return;
   $("#approval-title").textContent=offer.title;$("#approval-seller").textContent=offer.seller.name;$("#approval-price").textContent=money(offer.price.amountMinor,offer.price.currency);
-  const image=$("#approval-image");image.src=offer.image?.url??"/assets/intent-icon.png";image.alt=offer.image?.alt??offer.title;
+  const image=$("#approval-image");image.src=offer.image?.url??"/assets/intent-mark-v2.png";image.alt=offer.image?.alt??offer.title;
   $("#approval-mandate").textContent=`≤ ${money(state.mandate.maxAmountMinor,state.mandate.currency)} · ≥ ${state.mandate.minimumRating.toFixed(1)}★ · ≥ ${state.mandate.minimumReviews} reviews`;
   els.approvalState.textContent=state.authority.toUpperCase();els.approvalState.dataset.state=state.authority;els.leaseCount.textContent="60";renderCapabilityState();
 }

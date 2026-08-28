@@ -20,7 +20,8 @@ test("production surface uses an injected exact commerce origin without an ifram
   assert.match(app, /WebMCP agent connected/);
   assert.match(app, /Browsing mode/);
   assert.match(app, /Open Intent in a WebMCP-enabled client to collaborate with your agent\./);
-  assert.match(html, /Human-governed agentic commerce · live/);
+  assert.match(html, /Live agentic shopping · governed by you/);
+  assert.match(html, /ABSENT → LIVE → GONE/);
   assert.doesNotMatch(html, /Universal agentic commerce|impossible to quietly exceed/i);
   assert.doesNotMatch(build, /INTENT_VAULT_ORIGIN/);
 });

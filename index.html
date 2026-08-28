@@ -3,46 +3,65 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="description" content="Intent turns human approval into narrow, expiring, server-enforced authority for agentic shopping.">
-    <title>Intent — shop the open web with your agent</title>
-    <link rel="icon" type="image/png" href="/assets/intent-icon.png">
+    <meta name="description" content="Your agent shops. You call the shots. One human-approved checkout capability. Exact scope. One use.">
+    <meta property="og:title" content="Intent — Your agent shops. You call the shots.">
+    <meta property="og:description" content="One human-approved checkout capability. Exact scope. One use.">
+    <meta property="og:image" content="https://intent-commerce.gowtham0992.chatgpt.site/assets/intent-social-preview.png">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Intent — Your agent shops. You call the shots.">
+    <meta name="twitter:description" content="One human-approved checkout capability. Exact scope. One use.">
+    <meta name="twitter:image" content="https://intent-commerce.gowtham0992.chatgpt.site/assets/intent-social-preview.png">
+    <title>Intent — Your agent shops. You call the shots.</title>
+    <link rel="icon" type="image/png" href="/assets/intent-mark-v2.png">
     <link rel="stylesheet" href="/styles.css">
   </head>
   <body>
     <header class="topbar">
-      <a class="brand" href="#hero" aria-label="Intent home"><img class="brand-logo" src="/assets/intent-wordmark.png" alt="Intent"></a>
-      <div class="protocol-rail" aria-label="Protocol path"><span>Your agent</span><i></i><b>WebMCP</b><i></i><b>UCP</b><i></i><span>Merchants</span></div>
+      <a class="brand" href="#hero" aria-label="Intent home"><img class="brand-logo" src="/assets/intent-mark-v2.png" alt=""><span>intent</span></a>
+      <div class="protocol-rail" aria-label="Protocol path"><span>Agent proposes</span><i></i><b>You decide</b><i></i><span>Intent enforces</span></div>
       <button class="proof-button" id="proof-button" type="button"><span>14/14</span><small>boundary checks</small></button>
     </header>
 
     <main>
       <section class="view hero is-active" id="hero">
-        <div class="hero-halo" aria-hidden="true"></div>
-        <p class="eyebrow">Human-governed agentic commerce · live</p>
-        <h1>Shop with<br><em>intent.</em></h1>
-        <p class="hero-copy">Your agent proposes the purchase. You set the rules. Intent makes those rules executable—and prevents its checkout capability from exceeding them.</p>
-        <form class="search-shell" id="goal-form">
-          <div class="search-main">
-            <span class="prompt-glyph" aria-hidden="true">✦</span>
-            <label class="sr-only" for="goal">What are you shopping for?</label>
-            <input id="goal" name="goal" value="65W USB-C charger compatible with my MacBook, under $60" maxlength="240" required>
-            <button class="run-button" type="submit"><span>Search the open catalog</span><b>→</b></button>
+        <div class="hero-grid">
+          <div class="hero-message">
+            <p class="eyebrow">Live agentic shopping · governed by you</p>
+            <h1>Your agent shops.<br><em>You call the shots.</em></h1>
+            <p class="hero-copy">Real products. Live merchants. One checkout capability that can open exactly what you approved—once.</p>
+            <div class="hero-proof">
+              <span><i></i> Live inventory</span><span><i></i> No store account</span><span><i></i> No payment submitted</span>
+            </div>
           </div>
-          <div class="search-constraints">
-            <label><span>Hard budget</span><span class="input-affix">$</span><input id="budget" type="number" min="1" max="10000" step="1" value="60"></label>
-            <label><span>Minimum rating</span><input id="minimum-rating" type="number" min="0" max="5" step="0.1" value="4.5"></label>
-            <label><span>Review evidence</span><input id="minimum-reviews" type="number" min="0" max="1000000" step="1" value="100"></label>
-            <label><span>Ship to</span><select id="country"><option value="US">United States</option><option value="CA">Canada</option><option value="GB">United Kingdom</option><option value="AU">Australia</option></select></label>
+          <div class="permission-play" aria-label="An agent proposes, a person approves, and Intent makes one narrow capability available">
+            <div class="play-card agent-card"><span>01 / Agent</span><b>I found the match.</b><small>Six merchants · checked live</small></div>
+            <div class="permission-track"><span class="permission-token">1×</span></div>
+            <div class="play-card human-card"><span>02 / You</span><b>Under $60. 4.5★ minimum.</b><small>Nothing moves until you say so</small></div>
+            <div class="capability-ticket"><span>03 / Intent</span><b>ABSENT → LIVE → GONE</b><small>Scope frozen · replay blocked</small></div>
           </div>
-        </form>
-        <div class="hero-proof">
-          <span><i></i> Live merchant inventory</span><span><i></i> No store account</span><span><i></i> Payment stays with merchant</span>
+          <div class="search-zone">
+          <form class="search-shell" id="goal-form">
+            <div class="search-main">
+              <span class="prompt-glyph" aria-hidden="true">↗</span>
+              <label class="sr-only" for="goal">What are you shopping for?</label>
+              <input id="goal" name="goal" value="65W USB-C charger compatible with my MacBook, under $60" maxlength="240" required>
+              <button class="run-button" type="submit"><span>Find live matches</span><b>→</b></button>
+            </div>
+            <div class="search-constraints">
+              <label><span>Hard budget</span><span class="input-affix">$</span><input id="budget" type="number" min="1" max="10000" step="1" value="60"></label>
+              <label><span>Minimum rating</span><input id="minimum-rating" type="number" min="0" max="5" step="0.1" value="4.5"></label>
+              <label><span>Review evidence</span><input id="minimum-reviews" type="number" min="0" max="1000000" step="1" value="100"></label>
+              <label><span>Ship to</span><select id="country"><option value="US">United States</option><option value="CA">Canada</option><option value="GB">United Kingdom</option><option value="AU">Australia</option></select></label>
+            </div>
+          </form>
+          <div class="agent-status" id="agent-status" data-state="checking" role="status">
+            <i aria-hidden="true"></i>
+            <div><b>Checking agent connection</b><span>Intent works best in a WebMCP-enabled client.</span></div>
+          </div>
+          </div>
         </div>
-        <div class="agent-status" id="agent-status" data-state="checking" role="status">
-          <i aria-hidden="true"></i>
-          <div><b>Checking agent connection</b><span>Intent works best in a WebMCP-enabled client.</span></div>
-        </div>
-        <p class="hero-footnote">WebMCP lets your agent operate this interface. UCP connects Intent to commerce across participating merchants.</p>
+        <div class="hero-marquee" aria-hidden="true"><span>PROPOSE</span><i>●</i><span>BOUND</span><i>●</i><span>GRANT</span><i>●</i><span>OPEN ONCE</span><i>●</i><span>DISAPPEAR</span></div>
       </section>
 
       <section class="view market" id="market" aria-live="polite">
@@ -121,7 +140,7 @@
           <div class="receipt-actions"><a class="primary-button checkout-link" id="checkout-link" rel="noopener noreferrer">Continue to merchant <span>→</span></a><button class="secondary-button" id="reset-button" type="button">Shop again</button></div>
         </div>
         <div class="receipt-paper">
-          <div class="receipt-brand"><img class="receipt-brand-logo" src="/assets/intent-icon.png" alt=""><div><b>Intent receipt</b><small>UNIVERSAL COMMERCE PROTOCOL</small></div></div>
+          <div class="receipt-brand"><img class="receipt-brand-logo" src="/assets/intent-mark-v2.png" alt=""><div><b>Intent receipt</b><small>UNIVERSAL COMMERCE PROTOCOL</small></div></div>
           <div class="receipt-row"><span>Product</span><b id="receipt-product">—</b></div>
           <div class="receipt-row"><span>Merchant</span><b id="receipt-merchant">—</b></div>
           <div class="receipt-row"><span>Price</span><b id="receipt-price">—</b></div>

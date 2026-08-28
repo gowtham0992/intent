@@ -1,8 +1,12 @@
 <p align="center">
-  <img src="assets/intent-wordmark.png" alt="Intent" width="420">
+  <img src="assets/intent-mark-v2.png" alt="Intent" width="180">
 </p>
 
-<p align="center"><strong>Human-approved, server-enforced authority for agentic shopping.</strong></p>
+<h1 align="center">Intent</h1>
+
+<p align="center"><strong>Your agent shops. You call the shots.</strong></p>
+
+<p align="center">One human-approved checkout capability. Exact scope. One use.</p>
 
 <p align="center">
   <a href="https://intent-commerce.gowtham0992.chatgpt.site/intent">Live product on ChatGPT Sites</a>
