@@ -9,9 +9,11 @@ import { CAPABILITY_REASONS, capabilityReasonForExecutionError, createCapability
 import { commerceErrorFromResponse } from "./lib/commerce-error.js";
 import { createApprovalHandshake } from "./lib/approval-handshake.js";
 import { createToolReadback } from "./lib/tool-readback.js";
+import { createResumeSnapshot, parseResumeSnapshot } from "./lib/safe-resume.js";
 
 const $ = (selector) => document.querySelector(selector);
 const LEASE_MS = 60_000;
+const RESUME_STORAGE_KEY = "intent.safe-resume.v1";
 
 function configuredOrigin() {
   const value = window.__INTENT_CONFIG__?.commerceOrigin;
@@ -21,7 +23,7 @@ function configuredOrigin() {
 }
 
 const commerceOrigin = configuredOrigin();
-const state = { goal:null, mandate:null, mandateVersion:1, offers:[], selected:null, staged:null, activity:[], comparedVersions:new Set(), authority:"absent", capability:createCapabilityLedger(ACTION_TOOL), grant:null, controller:null, timeout:null, countdown:null, pendingApproval:null, busy:false, searchTimers:[] };
+const state = { goal:null, mandate:null, mandateVersion:1, offers:[], selected:null, staged:null, activity:[], comparedVersions:new Set(), authority:"absent", capability:createCapabilityLedger(ACTION_TOOL), grant:null, controller:null, timeout:null, countdown:null, pendingApproval:null, busy:false, searchTimers:[], persistenceReady:false, session:{status:"fresh",restored:false,restoredFrom:null,revalidatedAt:null,authorityRestored:false} };
 const els = {
   hero:$("#hero"), market:$("#market"), authority:$("#authority"), receipt:$("#receipt"), form:$("#goal-form"), goal:$("#goal"), budget:$("#budget"), country:$("#country"), minimumRating:$("#minimum-rating"), minimumReviews:$("#minimum-reviews"), mandateRating:$("#mandate-rating"), mandateReviews:$("#mandate-reviews"),
   grid:$("#offers-grid"), offersStage:$("#offers-stage"), searchProgress:$("#search-progress-text"), dock:$("#selection-dock"), searchButton:$("#goal-form button"), lease:$("#lease-button"), approvalState:$("#approval-state"), leaseCount:$("#lease-count"),
@@ -39,6 +41,40 @@ function renderActivity() {
 
 function addActivity(event) {
   state.activity=appendActivity(state.activity,event);renderActivity();
+  if(state.persistenceReady)persistSafeResume();
+}
+
+function sessionSnapshot() {
+  return Object.freeze({status:state.session.status,restored:state.session.restored,restoredFrom:state.session.restoredFrom,revalidatedAt:state.session.revalidatedAt,authorityRestored:false,persistedFields:["goal","mandate","activity"]});
+}
+
+function persistSafeResume() {
+  if(!state.persistenceReady||!state.goal||!state.mandate)return;
+  try{
+    const snapshot=createResumeSnapshot({goal:state.goal,mandate:state.mandate,mandateVersion:state.mandateVersion,activity:state.activity});
+    localStorage.setItem(RESUME_STORAGE_KEY,JSON.stringify(snapshot));
+  }catch(error){console.warn("Safe Resume could not save this decision room.",error);}
+}
+
+function clearSafeResume() {
+  try{localStorage.removeItem(RESUME_STORAGE_KEY);}catch{}
+}
+
+function fillSearchForm(snapshot) {
+  els.goal.value=snapshot.goal.query;els.budget.value=String(snapshot.goal.budget);els.country.value=snapshot.goal.country;els.minimumRating.value=String(snapshot.mandate.minimumRating);els.minimumReviews.value=String(snapshot.mandate.minimumReviews);
+}
+
+async function restoreSafeResume() {
+  let serialized;
+  try{serialized=localStorage.getItem(RESUME_STORAGE_KEY);}catch{return;}
+  if(!serialized)return;
+  let snapshot;
+  try{snapshot=parseResumeSnapshot(serialized);}
+  catch{clearSafeResume();return;}
+  fillSearchForm(snapshot);
+  state.session={status:"restoring",restored:false,restoredFrom:snapshot.savedAt,revalidatedAt:null,authorityRestored:false};
+  try{await runSearch(null,{resume:snapshot});}
+  catch{state.session={status:"restore_failed",restored:false,restoredFrom:snapshot.savedAt,revalidatedAt:null,authorityRestored:false};}
 }
 
 function money(amountMinor, currency) {
@@ -156,22 +192,27 @@ function renderMarket(payload) {
   els.grid.replaceChildren(...state.offers.map(renderOffer)); els.dock.hidden=true; state.selected=null;state.staged=null; view("market");
 }
 
-async function runSearch(input=null) {
+async function runSearch(input=null,{resume=null}={}) {
   if(state.busy)return null; state.busy=true;
+  state.persistenceReady=false;
   const previous=els.searchButton.querySelector("span").textContent;
   try {
-    const proposal=input??readProposal();
+    const proposal=resume?{goal:resume.goal,preferences:{minimumRating:resume.mandate.minimumRating,minimumReviews:resume.mandate.minimumReviews}}:(input??readProposal());
     settlePendingApproval({outcome:"superseded",detail:"A new shopping search replaced the staged proposal."});
-    state.activity=[];state.comparedVersions.clear();renderActivity();state.goal=validateGoal(proposal.goal??proposal); state.mandate=createMandate(state.goal,proposal.preferences??{minimumRating:proposal.minimumRating,minimumReviews:proposal.minimumReviews});state.mandateVersion=1; revoke("absent");resetCapabilityLedger();
+    state.activity=resume?resume.activity:[];state.comparedVersions.clear();renderActivity();state.goal=validateGoal(proposal.goal??proposal);state.mandate=resume?validateMandate(resume.mandate):createMandate(state.goal,proposal.preferences??{minimumRating:proposal.minimumRating,minimumReviews:proposal.minimumReviews});state.mandateVersion=resume?resume.mandateVersion:1;revoke("absent");resetCapabilityLedger();
     els.searchButton.disabled=true; els.searchButton.querySelector("span").textContent="Searching live merchants";
-    addActivity({actor:input?"agent":"you",title:"Searching live catalog",detail:"Mandate v1 · Shopify Global Catalog",...(input?{tool:"intent_propose_purchase_mandate"}:{})});
+    addActivity(resume?{actor:"intent",title:`Revalidating restored mandate v${state.mandateVersion}`,detail:"Fresh Shopify Global Catalog search · authority remains absent"}:{actor:input?"agent":"you",title:"Searching live catalog",detail:"Mandate v1 · Shopify Global Catalog",...(input?{tool:"intent_propose_purchase_mandate"}:{})});
     renderSearchProgress();
     const payload=await commerce("/v1/search",state.goal);
     state.offers=payload.offers.slice(0,6); renderMarket(payload);
     const eligible=state.offers.filter((offer)=>evaluateOffer(offer,state.mandate).eligible).length;
-    addActivity({actor:input?"agent":"you",title:"Proposed mandate v1",detail:`${eligible} eligible · ${state.offers.length-eligible} blocked`,...(input?{tool:"intent_propose_purchase_mandate"}:{})});
-    setAuthority("absent",{reason:CAPABILITY_REASONS.AGENT_STAGING_REQUIRED,actor:input?"agent":"human"});
-    toast("Live market ready",`${state.offers.length} real offers arrived through UCP.`);
+    addActivity(resume?{actor:"intent",title:`Restored mandate v${state.mandateVersion}`,detail:`${eligible} eligible · ${state.offers.length-eligible} blocked · live offers revalidated`}:{actor:input?"agent":"you",title:"Proposed mandate v1",detail:`${eligible} eligible · ${state.offers.length-eligible} blocked`,...(input?{tool:"intent_propose_purchase_mandate"}:{})});
+    setAuthority("absent",{reason:CAPABILITY_REASONS.AGENT_STAGING_REQUIRED,actor:resume?"intent":input?"agent":"human"});
+    const revalidatedAt=Date.now();
+    state.session=resume?{status:"restored",restored:true,restoredFrom:resume.savedAt,revalidatedAt,authorityRestored:false}:{status:"active",restored:false,restoredFrom:null,revalidatedAt,authorityRestored:false};
+    state.persistenceReady=true;persistSafeResume();
+    if(resume){els.searchProgress.textContent="Restored safely · live offers revalidated · checkout authority absent";toast("Decision room restored",`Mandate v${state.mandateVersion} is live again. Checkout authority was not restored.`);}
+    else toast("Live market ready",`${state.offers.length} real offers arrived through UCP.`);
     return payload;
   } catch(error){clearSearchProgress();view("hero");toast("Search unavailable",error.message,true);throw error;}
   finally{state.busy=false;els.searchButton.disabled=false;els.searchButton.querySelector("span").textContent=previous;}
@@ -258,7 +299,7 @@ function resetCapabilityLedger() {
 }
 
 function currentPlan() {
-  return {goal:state.goal,mandate:state.mandate?{version:state.mandateVersion,...state.mandate}:null,selectedOffer:state.selected?offerSummary(state.selected):null,stagedProposal:state.staged,activity:state.activity,action:"open_exact_merchant_checkout",paymentSubmitted:false,authority:snapshotCapability(state.capability)};
+  return {goal:state.goal,mandate:state.mandate?{version:state.mandateVersion,...state.mandate}:null,selectedOffer:state.selected?offerSummary(state.selected):null,stagedProposal:state.staged,activity:state.activity,session:sessionSnapshot(),action:"open_exact_merchant_checkout",paymentSubmitted:false,authority:snapshotCapability(state.capability)};
 }
 
 function mutationReadback() {
@@ -319,14 +360,14 @@ async function registerStaticTools() {
   const tools=[
     {...staticToolContracts.propose,async execute(input){const goal=validateGoal({query:input.query,budget:input.budget,country:input.country});const payload=await runSearch({goal,preferences:{minimumRating:input.minimumRating,minimumReviews:input.minimumReviews}});return{content:[{type:"text",text:`Intent opened mandate v1 with ${state.offers.filter((offer)=>evaluateOffer(offer,state.mandate).eligible).length} eligible and ${state.offers.filter((offer)=>!evaluateOffer(offer,state.mandate).eligible).length} blocked live offers. Compare the candidates, then stage one eligible offer under mandate v1 for human review. No checkout authority exists.`}],mandate:state.mandate,offers:state.offers.map(offerSummary),source:payload.source,readback:mutationReadback()};}},
     {...staticToolContracts.compare,async execute(){if(!state.offers.length)return{content:[{type:"text",text:"No decision room exists. Use intent_propose_purchase_mandate first."}]};const candidates=state.offers.map(offerSummary);const audit=summarizeComparison(candidates.map(({decision})=>decision),state.mandateVersion);if(!state.comparedVersions.has(state.mandateVersion)){state.comparedVersions.add(state.mandateVersion);addActivity({actor:"agent",title:`Evaluated ${audit.candidateCount} candidates`,detail:`${audit.checkCount} deterministic checks · mandate v${audit.mandateVersion}`,tool:"intent_compare_candidates"});}return{content:[{type:"text",text:JSON.stringify({audit,candidates},null,2)}],audit,candidates};}},
-    {...staticToolContracts.read,async execute(){const plan=currentPlan();const snapshot={goal:plan.goal,mandate:plan.mandate,selectedOffer:plan.selectedOffer,stagedProposal:plan.stagedProposal,activity:plan.activity,authority:plan.authority};return{content:[{type:"text",text:JSON.stringify(snapshot,null,2)}],snapshot};}},
+    {...staticToolContracts.read,async execute(){const plan=currentPlan();const snapshot={goal:plan.goal,mandate:plan.mandate,selectedOffer:plan.selectedOffer,stagedProposal:plan.stagedProposal,activity:plan.activity,session:plan.session,authority:plan.authority};return{content:[{type:"text",text:JSON.stringify(snapshot,null,2)}],snapshot};}},
     {...staticToolContracts.stage,async execute(input,{signal}={}){const proposal=stageCandidate({offers:state.offers,mandate:state.mandate,currentVersion:state.mandateVersion,requestedVersion:input.mandateVersion,variantId:input.variantId,authority:state.authority});selectOffer(proposal.offer,{agentStaged:true,tool:"intent_stage_candidate_for_approval"});populateApproval();$("#authority-copy").textContent="Your agent is waiting on this exact decision. Review the frozen handoff and grant once to let it continue automatically—no follow-up chat message needed.";view("authority");const decision=await waitForHumanApproval(proposal,signal);return stagedApprovalResult(proposal,decision);}}
   ];
   try{for(const tool of tools)await document.modelContext.registerTool(tool);}
   catch(error){console.error("Static WebMCP registration failed.",error);toast("WebMCP registration failed",error.message,true);}
 }
 
-function reset(){clearSearchProgress();revoke("absent");settlePendingApproval({outcome:"reset",detail:"The human ended this shopping decision."});state.goal=null;state.mandate=null;state.mandateVersion=1;state.offers=[];state.selected=null;state.staged=null;state.activity=[];state.comparedVersions.clear();resetCapabilityLedger();renderActivity();els.grid.replaceChildren();els.dock.hidden=true;els.authority.dataset.ready="false";els.lease.disabled=true;els.lease.textContent="Grant one-use authority →";$("#authority-copy").textContent="Your agent can search and compare. It cannot open a checkout until it stages one eligible offer and you grant a one-use capability.";view("hero");}
+function reset(){clearSearchProgress();revoke("absent");settlePendingApproval({outcome:"reset",detail:"The human ended this shopping decision."});state.goal=null;state.mandate=null;state.mandateVersion=1;state.offers=[];state.selected=null;state.staged=null;state.activity=[];state.comparedVersions.clear();state.persistenceReady=false;state.session={status:"fresh",restored:false,restoredFrom:null,revalidatedAt:null,authorityRestored:false};clearSafeResume();resetCapabilityLedger();renderActivity();els.grid.replaceChildren();els.dock.hidden=true;els.authority.dataset.ready="false";els.lease.disabled=true;els.lease.textContent="Grant one-use authority →";$("#authority-copy").textContent="Your agent can search and compare. It cannot open a checkout until it stages one eligible offer and you grant a one-use capability.";view("hero");}
 
 els.form.addEventListener("submit",(event)=>{event.preventDefault();runSearch().catch(()=>{});});
 $("#apply-mandate").addEventListener("click",applyMandate);
@@ -343,3 +384,4 @@ $("#proof-score").textContent=`${evaluations.filter(item=>item.passed).length}/$
 els.proofList.replaceChildren(...evaluations.map(item=>{const li=document.createElement("li");if(!item.passed)li.className="failed";const mark=document.createElement("span");mark.textContent=item.passed?"✓":"×";const copy=document.createElement("div");const name=document.createElement("b");name.textContent=item.name;const meta=document.createElement("small");meta.textContent=`${item.id} · ${item.category}`;copy.append(name,meta);li.append(mark,copy);return li;}));
 registerStaticTools();
 renderCapabilityState();
+restoreSafeResume();

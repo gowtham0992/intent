@@ -60,7 +60,7 @@
     },
     {
       "name": "intent_read_purchase_mandate",
-      "description": "Read the current human-edited purchase mandate, staged proposal, collaboration history, and the reason-coded lifecycle of checkout authority—including why the dynamic capability is absent and which actor owns the next step. Read-only; capability reasons are page-asserted transparency, not identity attestation.",
+      "description": "Read the current human-edited purchase mandate, staged proposal, collaboration history, safe-resume and live-revalidation status, and the reason-coded lifecycle of checkout authority—including why the dynamic capability is absent and which actor owns the next step. Read-only; capability reasons are page-asserted transparency, not identity attestation.",
       "inputSchema": {
         "type": "object",
         "properties": {},

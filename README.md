@@ -26,6 +26,8 @@ Intent is a shared WebMCP decision room for consequential agent actions. An agen
 
 The Cloudflare backend atomically consumes that authority and revalidates the live Shopify offer before returning a merchant cart URL. Replay, scope widening, price drift, unavailability, and mandate violations fail closed. Intent never accepts payment credentials or submits payment.
 
+The decision context can also survive a refresh without carrying authority across it: Intent restores the validated mandate and bounded collaboration history, re-fetches live offers, and keeps proposals, leases, and the checkout capability absent.
+
 ## Why Intent exists
 
 A normal agent confirmation is a moment in a conversation. It is not an enforceable object: it does not define an exact scope, expire, prevent replay, or verify that execution still matched the approved offer.
@@ -60,10 +62,11 @@ No account, credentials, store, Shopify token, or seeded catalog is required.
    > Use Intent to find a charger available in the US under $100, with at least 100W total output, three ports including two USB-C ports, foldable US prongs, a rating of at least 4.5, and at least 200 reviews. Stage the strongest eligible offer for approval. Do not purchase anything.
 
 3. Confirm that the agent opens the shared room, compares live offers, and stages one candidate while checkout authority remains absent.
-4. Optionally edit the mandate and ask the agent to read the latest version and stage again.
-5. Click **Grant one-use authority** on the page.
-6. Ask the agent to use the newly available Intent checkout tool.
-7. Confirm that the merchant cart handoff is returned, <code>paymentSubmitted</code> is <code>false</code>, and the tool disappears.
+4. Optionally refresh before approval. Confirm that Intent restores the mandate, revalidates fresh live offers, and still exposes no checkout capability.
+5. Optionally edit the mandate and ask the agent to read the latest version and stage again.
+6. Click **Grant one-use authority** on the page.
+7. Ask the agent to use the newly available Intent checkout tool.
+8. Confirm that the merchant cart handoff is returned, <code>paymentSubmitted</code> is <code>false</code>, and the tool disappears.
 
 The observable lifecycle is:
 
@@ -98,6 +101,7 @@ Intent uses WebMCP as a runtime authority surface, not merely as a structured co
 - **Agent-only actions:** comparison matrices, proposal staging, and checkout invocation are structured agent operations rather than duplicated buttons.
 - **Dynamic authority:** the checkout tool is registered only after a human click and revoked through <code>AbortController</code> after use, cancellation, failure, or expiry.
 - **Explainable disappearance:** the permanent read tool reports why checkout authority is absent, who owns the next step, and the bounded transition history—even after the temporary tool is gone.
+- **Safe resumption:** validated mandate context can survive a refresh, but Intent re-queries UCP and never restores an offer, staged proposal, lease, or dynamic checkout capability.
 - **Inspectable scope:** every field in the temporary tool's input schema is frozen to a single allowed value.
 - **Independent enforcement:** the schema communicates the contract, while the Worker and Durable Object enforce it against live external state.
 - **Untrusted-data signaling:** every tool that can return merchant-controlled catalog content sets WebMCP's <code>untrustedContentHint</code> so capable clients can apply heightened handling.
@@ -127,7 +131,7 @@ WebMCP is the agent-to-page interface. UCP is the commerce interoperability rail
 | --- | --- | --- |
 | <code>intent_propose_purchase_mandate</code> | Page load | Creates the mandate, searches live UCP offers, and opens the decision room |
 | <code>intent_compare_candidates</code> | Page load | Returns every deterministic check and numeric delta for every candidate |
-| <code>intent_read_purchase_mandate</code> | Page load | Reads the current mandate, proposal, provenance, and reason-coded capability lifecycle |
+| <code>intent_read_purchase_mandate</code> | Page load | Reads the current mandate, proposal, provenance, safe-resume status, and reason-coded capability lifecycle |
 | <code>intent_stage_candidate_for_approval</code> | Page load | Stages one eligible offer, opens human review, and waits so a grant can resume the same agent turn |
 | <code>intent_open_approved_checkout_once</code> | Human-granted for at most 60 seconds | Revalidates and returns one exact merchant checkout, then disappears |
 
@@ -177,7 +181,7 @@ npm run check   # syntax checks plus the full test suite
 npm run build   # create the static dist/ output
 ~~~
 
-The suite currently contains 45 top-level tests, including a 14-case boundary matrix, reason-coded lifecycle transitions, mandate-version invalidation, atomic replay rejection, scope-widening rejection, live price revalidation, untrusted-output signaling, mutation read-backs, agent-evaluation contract validation, tool provenance validation, and production configuration checks.
+The suite currently contains 48 top-level tests, including a 14-case boundary matrix, reason-coded lifecycle transitions, mandate-version invalidation, safe-resume isolation, atomic replay rejection, scope-widening rejection, live price revalidation, untrusted-output signaling, mutation read-backs, agent-evaluation contract validation, tool provenance validation, and production configuration checks.
 
 ## Deploy your own instance
 
@@ -281,7 +285,7 @@ Both commands write console, HTML, and JSON reports under the ignored <code>.eva
 ~~~text
 app.js                          page state, WebMCP registration, capability lifecycle
 cloudflare/commerce-worker.mjs UCP gateway, validation, lease issuance and consumption
-lib/                            mandate, evaluation, capability ledger, activity and staging logic
+lib/                            mandate, evaluation, safe resume, capability ledger, activity and staging logic
 plugins/intent/                 optional Codex routing plugin
 tests/                          policy, lifecycle, deployment and boundary tests
 evals/                          WebMCP agent trajectories and generated lifecycle schemas
@@ -292,11 +296,11 @@ server.mjs                      dependency-free local development servers
 
 ## Current boundaries
 
-Intent currently supports one physical item, USD mandate evidence, a 60-second lease, Shopify Global Catalog discovery, and merchant-cart handoff. Mandates are page-local and disappear with the tab.
+Intent currently supports one physical item, USD mandate evidence, a 60-second lease, Shopify Global Catalog discovery, and merchant-cart handoff. Validated mandate context and bounded activity can resume for 24 hours in same-origin browser storage; offers are re-fetched live, while proposals, leases, and checkout authority never resume.
 
 The origin allowlist is CSRF hygiene, not authentication. A human click gates authority in the page, but it is not cryptographic proof of human identity. The lifecycle ledger is page-asserted transparency, not remote attestation. Merchants do not currently consume or verify the Intent mandate, and an agent can bypass Intent by navigating directly to a public merchant cart. Intent demonstrates an opt-in enforceable execution path for WebMCP clients; it is not a universal commerce firewall.
 
-Accounts, saved mandates, multi-item checkout, payment execution, merchant-side mandate verification, and universal client compatibility are outside the current scope.
+Accounts, account-synced or cross-device mandates, multi-item checkout, payment execution, merchant-side mandate verification, and universal client compatibility are outside the current scope.
 
 ## License
 
