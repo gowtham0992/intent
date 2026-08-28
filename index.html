@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="Intent is the shared decision layer for universal agentic commerce.">
+    <title>Intent — shop the open web with your agent</title>
+    <link rel="icon" type="image/png" href="/assets/intent-icon.png">
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#hero" aria-label="Intent home"><img class="brand-logo" src="/assets/intent-wordmark.png" alt="Intent"></a>
+      <div class="protocol-rail" aria-label="Protocol path"><span>Your agent</span><i></i><b>WebMCP</b><i></i><b>UCP</b><i></i><span>Merchants</span></div>
+      <button class="proof-button" id="proof-button" type="button"><span>14/14</span><small>boundary checks</small></button>
+    </header>
+
+    <main>
+      <section class="view hero is-active" id="hero">
+        <div class="hero-halo" aria-hidden="true"></div>
+        <p class="eyebrow">Universal agentic commerce · live</p>
+        <h1>Shop with<br><em>intent.</em></h1>
+        <p class="hero-copy">Your agent proposes the purchase. You set the rules. Intent makes those rules executable—and impossible to quietly exceed.</p>
+        <form class="search-shell" id="goal-form">
+          <div class="search-main">
+            <span class="prompt-glyph" aria-hidden="true">✦</span>
+            <label class="sr-only" for="goal">What are you shopping for?</label>
+            <input id="goal" name="goal" value="65W USB-C charger compatible with my MacBook, under $60" maxlength="240" required>
+            <button class="run-button" type="submit"><span>Search the open catalog</span><b>→</b></button>
+          </div>
+          <div class="search-constraints">
+            <label><span>Hard budget</span><span class="input-affix">$</span><input id="budget" type="number" min="1" max="10000" step="1" value="60"></label>
+            <label><span>Minimum rating</span><input id="minimum-rating" type="number" min="0" max="5" step="0.1" value="4.5"></label>
+            <label><span>Review evidence</span><input id="minimum-reviews" type="number" min="0" max="1000000" step="1" value="100"></label>
+            <label><span>Ship to</span><select id="country"><option value="US">United States</option><option value="CA">Canada</option><option value="GB">United Kingdom</option><option value="AU">Australia</option></select></label>
+          </div>
+        </form>
+        <div class="hero-proof">
+          <span><i></i> Live merchant inventory</span><span><i></i> No store account</span><span><i></i> Payment stays with merchant</span>
+        </div>
+        <p class="hero-footnote">WebMCP lets your agent operate this interface. UCP connects Intent to commerce across participating merchants.</p>
+      </section>
+
+      <section class="view market" id="market" aria-live="polite">
+        <div class="market-head">
+          <div>
+            <p class="eyebrow dark">Shared decision room</p>
+            <h2>Your agent proposed.<br><em>You decide.</em></h2>
+          </div>
+          <button class="text-button" id="new-search" type="button">← New search</button>
+        </div>
+        <div class="market-layout">
+          <aside class="brief-panel">
+            <div class="panel-title"><p class="panel-index">01 / Purchase mandate</p><span id="mandate-version">v1</span></div>
+            <blockquote id="brief-query">—</blockquote>
+            <div class="brief-facts">
+              <div><span>Ceiling</span><b id="brief-budget">—</b></div>
+              <div><span>Market</span><b id="brief-country">—</b></div>
+              <div><span>Identity shared</span><b>None</b></div>
+            </div>
+            <div class="mandate-editor">
+              <div><span>Human-editable rules</span><small>Agent proposed</small></div>
+              <label><span>Minimum rating</span><input id="mandate-rating" type="number" min="0" max="5" step="0.1"></label>
+              <label><span>Minimum reviews</span><input id="mandate-reviews" type="number" min="0" max="1000000" step="1"></label>
+              <button id="apply-mandate" type="button">Apply mandate <span>↻</span></button>
+            </div>
+            <section class="activity-ledger" aria-labelledby="activity-title">
+              <div class="activity-head"><span id="activity-title">02 / Live collaboration</span><small><i></i> Shared state</small></div>
+              <ol class="activity-list" id="activity-list" aria-live="polite"></ol>
+            </section>
+            <div class="catalog-signal"><span class="pulse"></span><div><b>Shopify Global Catalog</b><small id="catalog-count">Live UCP results</small></div></div>
+            <p class="source-note">Results are rendered live and never cached. Price, availability, tax, and shipping are rechecked by the merchant.</p>
+          </aside>
+          <div class="offers-stage">
+            <div class="offers-head"><span id="offers-summary">Live offers</span><span>Inspect freely · your agent stages the proposal</span></div>
+            <div class="offers-grid" id="offers-grid"></div>
+          </div>
+        </div>
+        <div class="selection-dock" id="selection-dock" hidden>
+          <div class="selection-copy"><span id="selection-label">Agent proposal</span><b id="selected-title">—</b><small id="selected-seller">—</small></div>
+          <div class="selection-price"><span>Live price</span><b id="selected-price">—</b></div>
+          <button class="primary-button" id="review-offer" type="button" disabled>Review exact handoff <span>→</span></button>
+        </div>
+      </section>
+
+      <section class="view authority" id="authority" aria-live="assertive">
+        <div class="authority-grid">
+          <div class="authority-copy">
+            <p class="eyebrow">Human authority required</p>
+            <h2>One mandate.<br>One use.<br><em>Then gone.</em></h2>
+            <p id="authority-copy">The checkout capability does not exist yet. Your click creates it for sixty seconds, frozen to this exact product, merchant, and price.</p>
+            <div class="lease-clock"><span id="lease-count">60</span><small>second lease</small></div>
+          </div>
+          <article class="approval-card">
+            <div class="approval-top"><span>Exact handoff contract</span><b id="approval-state">ABSENT</b></div>
+            <img id="approval-image" alt="">
+            <div class="approval-product"><div><small id="approval-seller">—</small><h3 id="approval-title">—</h3></div><strong id="approval-price">—</strong></div>
+            <dl>
+              <div><dt>Agent may</dt><dd>Open this exact merchant cart</dd></div>
+              <div><dt>Mandate</dt><dd id="approval-mandate">—</dd></div>
+              <div><dt>Agent may not</dt><dd>Change item, price, or quantity</dd></div>
+              <div><dt>Payment</dt><dd>Not submitted · remains human</dd></div>
+              <div><dt>Lifecycle</dt><dd id="approval-lifecycle">Absent · awaiting your one-use grant</dd></div>
+            </dl>
+            <div class="approval-actions"><button class="secondary-button light" id="cancel-lease" type="button">Back</button><button class="lime-button" id="lease-button" type="button">Grant one-use authority <span>→</span></button></div>
+            <p class="capability-name">Dynamic tool · <code>intent_open_approved_checkout_once</code></p>
+          </article>
+        </div>
+      </section>
+
+      <section class="view receipt" id="receipt" aria-live="polite">
+        <div class="receipt-copy">
+          <div class="success-mark">✓</div>
+          <p class="eyebrow dark">Verified handoff</p>
+          <h2>Checkout ready.<br><em>Authority gone.</em></h2>
+          <p>Intent revalidated the exact offer through UCP and returned the merchant cart. Nothing was purchased. You stay in control of shipping, tax, and payment.</p>
+          <div class="receipt-actions"><a class="primary-button checkout-link" id="checkout-link" rel="noopener noreferrer">Continue to merchant <span>→</span></a><button class="secondary-button" id="reset-button" type="button">Shop again</button></div>
+        </div>
+        <div class="receipt-paper">
+          <div class="receipt-brand"><img class="receipt-brand-logo" src="/assets/intent-icon.png" alt=""><div><b>Intent receipt</b><small>UNIVERSAL COMMERCE PROTOCOL</small></div></div>
+          <div class="receipt-row"><span>Product</span><b id="receipt-product">—</b></div>
+          <div class="receipt-row"><span>Merchant</span><b id="receipt-merchant">—</b></div>
+          <div class="receipt-row"><span>Price</span><b id="receipt-price">—</b></div>
+          <div class="receipt-row"><span>Mandate</span><b id="receipt-mandate">—</b></div>
+          <div class="receipt-row"><span>Payment</span><b>Not submitted</b></div>
+          <div class="receipt-row"><span>Capability</span><b class="gone">Consumed · cannot replay</b></div>
+          <div class="receipt-row"><span>Server validation</span><b>Live UCP revalidation</b></div>
+          <div class="capability-explanation">
+            <span class="capability-dot" aria-hidden="true"></span>
+            <div><small>Agent-readable disappearance reason</small><b id="receipt-capability-reason">CONSUMED</b><span id="receipt-capability-next">Next: human · start new authorization</span></div>
+            <em>Page asserted</em>
+          </div>
+          <div class="receipt-history"><span>Collaboration record</span><ol class="activity-list receipt-activity" id="receipt-activity-list"></ol></div>
+          <div class="receipt-hash"><span>Client integrity check</span><code id="receipt-hash">sha256:pending</code></div>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="proof-dialog">
+      <div class="dialog-head"><div><p class="eyebrow dark">Deterministic evaluation</p><h2>Evidence, not vibes.</h2></div><button id="proof-close" class="icon-button" aria-label="Close">×</button></div>
+      <div class="proof-summary"><strong id="proof-score">14/14</strong><div><b>checks passing</b><span>Brief · identity · money · authority</span></div></div>
+      <ol class="proof-list" id="proof-list"></ol>
+      <p>The interface and the test suite execute the same boundary functions. Run independently with <code>npm test</code>.</p>
+    </dialog>
+    <div class="toast" id="toast" role="status"><span>✓</span><p><b id="toast-title">Ready</b><small id="toast-copy">Intent is connected.</small></p></div>
+    <script src="/config.js"></script>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

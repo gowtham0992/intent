@@ -1,0 +1,35 @@
+{
+  "name": "intent-webmcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:sites": "node scripts/prepare-sites.mjs && vinext build",
+    "dev:sites": "node scripts/prepare-sites.mjs && vinext dev",
+    "start:sites": "vinext start",
+    "dev": "node server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check app.js && node --check lib/policy.js && node --check lib/staging.js && node --check lib/activity.js && node --check lib/comparison.js && node --check lib/capability-state.js && node --check lib/commerce-error.js && node --check lib/local-durable-object-binding.mjs && node --check cloudflare/commerce-worker.mjs && node --check server.mjs && node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "next": "^16.3.3",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.54.1",
+    "@cloudflare/workers-types": "^5.20260827.1",
+    "@openai/sites-vite-plugin": "0.2.0",
+    "@types/node": "22.19.19",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.2",
+    "@vitejs/plugin-rsc": "^0.5.34",
+    "react-server-dom-webpack": "^19.2.8",
+    "typescript": "5.9.3",
+    "vinext": "^1.0.0-beta.8",
+    "vite": "^8.2.2",
+    "wrangler": "^4.127.0"
+  }
+}

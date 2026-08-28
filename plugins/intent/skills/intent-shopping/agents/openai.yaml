@@ -1,0 +1,7 @@
+interface:
+  display_name: "Intent Shopping"
+  short_description: "Route shopping through one-use agent authority"
+  default_prompt: "Use $intent-shopping to find me a reliable 65W USB-C charger under $60."
+policy:
+  allow_implicit_invocation: true
+

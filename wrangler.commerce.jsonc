@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "intent-commerce",
+  "main": "cloudflare/commerce-worker.mjs",
+  "compatibility_date": "2026-08-25",
+  "vars": {
+    "MERCHANT_ORIGIN": "https://intent-commerce.gowtham0992.chatgpt.site",
+    "ADDITIONAL_MERCHANT_ORIGIN": "https://intent-lime-five.vercel.app",
+    "UCP_AGENT_PROFILE_URL": "https://intent-commerce.gowtham0992.workers.dev/.well-known/ucp"
+  },
+  "durable_objects": {
+    "bindings": [
+      { "name": "PURCHASE_LEASES", "class_name": "PurchaseLease" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["PurchaseLease"] }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "name": "intent",
+  "version": "0.2.0",
+  "description": "Route ordinary shopping requests from Codex into Intent's live, human-controlled WebMCP purchase flow.",
+  "author": {
+    "name": "Gowtham Sarveswaran",
+    "url": "https://github.com/gowtham0992"
+  },
+  "homepage": "https://intent-lime-five.vercel.app/",
+  "repository": "https://github.com/gowtham0992/intent",
+  "license": "MIT",
+  "keywords": [
+    "webmcp",
+    "commerce",
+    "shopping",
+    "authorization",
+    "ucp"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Intent",
+    "shortDescription": "Shop through human-controlled agent authority.",
+    "longDescription": "Intent routes a natural-language shopping request into a shared WebMCP decision room, then exposes one exact checkout capability only after the human approves it.",
+    "developerName": "Gowtham Sarveswaran",
+    "category": "Shopping",
+    "capabilities": [
+      "WebMCP",
+      "Interactive",
+      "Commerce"
+    ],
+    "websiteURL": "https://intent-lime-five.vercel.app/",
+    "defaultPrompt": "Find me a reliable 65W USB-C charger for my MacBook under $60."
+  }
+}

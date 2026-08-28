@@ -1,0 +1,15 @@
+.DS_Store
+node_modules/
+npm-debug.log*
+.env
+.env.*
+!.env.example
+coverage/
+dist/
+public/
+.next/
+.wrangler/
+strategy/
+evidence/
+spikes/
+*.local
