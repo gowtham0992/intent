@@ -1,0 +1,96 @@
+{
+  "tools": [
+    {
+      "name": "intent_propose_purchase_mandate",
+      "description": "Propose bounded shopping rules, search live UCP offers, and open Intent's shared human-editable decision room. Call only when the user supplied an explicit hard budget; never invent or infer one. Preserve every stated requirement, and pass 0 for rating or review thresholds the user did not specify. This cannot select an offer, grant authority, or create a cart.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 240,
+            "description": "The physical product to find, including every hard requirement the user stated."
+          },
+          "budget": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 10000,
+            "description": "The user's hard total price ceiling in the mandate currency."
+          },
+          "country": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$",
+            "default": "US",
+            "description": "Two-letter destination country code; default to US only when the user did not specify one."
+          },
+          "minimumRating": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 5,
+            "default": 0,
+            "description": "Hard minimum star rating, or 0 when the user did not specify one."
+          },
+          "minimumReviews": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000,
+            "default": 0,
+            "description": "Hard minimum review count, or 0 when the user did not specify one."
+          }
+        },
+        "required": [
+          "query",
+          "budget",
+          "country",
+          "minimumRating",
+          "minimumReviews"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "intent_compare_candidates",
+      "description": "Evaluate every live candidate against every deterministic rule in the current human-visible mandate. Returns an audit summary plus exact reasons each offer is eligible or blocked. Read-only.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "intent_read_purchase_mandate",
+      "description": "Read the current human-edited purchase mandate, staged proposal, collaboration history, and the reason-coded lifecycle of checkout authority—including why the dynamic capability is absent and which actor owns the next step. Read-only; capability reasons are page-asserted transparency, not identity attestation.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "intent_stage_candidate_for_approval",
+      "description": "Stage one eligible live candidate under the exact current mandate version, open its human approval screen, and wait for the decision in this same tool call. If the human grants, continue by refreshing tools and invoking the newly live one-use checkout capability. This tool cannot grant itself authority, create a cart, or submit payment.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "variantId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "The exact variantId of an eligible candidate returned by the current comparison."
+          },
+          "mandateVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The current mandate version returned by Intent; never reuse a version after the human edits the mandate."
+          }
+        },
+        "required": [
+          "variantId",
+          "mandateVersion"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ]
+}

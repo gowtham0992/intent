@@ -6,13 +6,14 @@ test("production surface uses an injected exact commerce origin without an ifram
   const app = await readFile(new URL("../app.js", import.meta.url), "utf8");
   const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
   const build = await readFile(new URL("../scripts/build.mjs", import.meta.url), "utf8");
+  const toolContracts = await readFile(new URL("../lib/webmcp-tool-contracts.js", import.meta.url), "utf8");
   assert.doesNotMatch(app, /127\.0\.0\.1/);
   assert.match(html, /<script src="\/config\.js"><\/script>/);
   assert.doesNotMatch(html, /<iframe/);
   assert.doesNotMatch(app, /vaultOrigin|discloseThroughVault/);
   assert.doesNotMatch(app, /modelContext\?\.executeTool|modelContext\?\.getTools/);
-  assert.match(app, /const ACTION_TOOL = "intent_open_approved_checkout_once"/);
-  assert.match(app, /name:"intent_stage_candidate_for_approval"/);
+  assert.match(toolContracts, /ACTION_TOOL = "intent_open_approved_checkout_once"/);
+  assert.match(toolContracts, /name: "intent_stage_candidate_for_approval"/);
   assert.match(app, /const decision=await waitForHumanApproval\(proposal,signal\)/);
   assert.match(app, /no follow-up chat message needed/i);
   assert.match(app, /settlePendingApproval\(\{outcome:"granted"/);
@@ -26,7 +27,7 @@ test("production surface uses an injected exact commerce origin without an ifram
   assert.match(app, /Searching live merchants/);
   assert.match(app, /Applying mandate rules/);
   assert.match(app, /Ranking eligible offers/);
-  assert.equal(app.match(/untrustedContentHint:true/g)?.length, 5);
+  assert.equal(toolContracts.match(/untrustedContentHint: true/g)?.length, 5);
   assert.match(app, /via WebMCP/);
   assert.match(app, /readback:mutationReadback\(\)/);
   assert.doesNotMatch(app, /fake progress|\d+% complete/i);

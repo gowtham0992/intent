@@ -177,7 +177,7 @@ npm run check   # syntax checks plus the full test suite
 npm run build   # create the static dist/ output
 ~~~
 
-The suite currently contains 42 top-level tests, including a 14-case boundary matrix, reason-coded lifecycle transitions, mandate-version invalidation, atomic replay rejection, scope-widening rejection, live price revalidation, untrusted-output signaling, mutation read-backs, tool provenance validation, and production configuration checks.
+The suite currently contains 45 top-level tests, including a 14-case boundary matrix, reason-coded lifecycle transitions, mandate-version invalidation, atomic replay rejection, scope-widening rejection, live price revalidation, untrusted-output signaling, mutation read-backs, agent-evaluation contract validation, tool provenance validation, and production configuration checks.
 
 ## Deploy your own instance
 
@@ -261,6 +261,21 @@ Exercise the [live workflow](#try-the-live-product) and verify:
 6. The fifth tool disappears.
 7. Replay and widened scope are rejected by the Worker.
 
+### Agent-behavior evaluations
+
+The deterministic test suite verifies policy and server enforcement. The separate WebMCP agent suites verify that a model selects the right tools, preserves the user's hard constraints, follows the required order, stops when no offer qualifies, and never treats an absent or consumed capability as permission.
+
+The schemas used by the evaluator are generated from the same contracts registered by the production page, preventing the test surface from drifting away from the product. The evaluator is pinned as a development dependency; model credentials are used only by the evaluator and must stay in an uncommitted <code>.env</code> file.
+
+Copy <code>.env.example</code> to <code>.env</code> and provide one supported provider key. The default is the high-volume Gemini Flash-Lite model through the Vercel AI SDK backend because that backend supports the suite's multi-step mocked trajectories. Set <code>WEBMCP_EVAL_MODEL</code> to override the model without changing the committed runner.
+
+~~~bash
+npm run eval:agent
+npm run eval:authority
+~~~
+
+Both commands write console, HTML, and JSON reports under the ignored <code>.evals/</code> directory. A wrapper converts evaluator errors and behavioral mismatches into a non-zero exit code so these commands are safe to use as CI gates. The pre-approval command paces cases for Gemini's free-tier request window; paid or local backends can override this with <code>WEBMCP_EVAL_PACE_MS=0</code>. It uses controlled catalog outputs to test probabilistic tool choice without touching commerce. The granted-state suite uses a clearly synthetic frozen lease. Neither suite bypasses the product's real human approval gate.
+
 ## Repository map
 
 ~~~text
@@ -269,6 +284,7 @@ cloudflare/commerce-worker.mjs UCP gateway, validation, lease issuance and consu
 lib/                            mandate, evaluation, capability ledger, activity and staging logic
 plugins/intent/                 optional Codex routing plugin
 tests/                          policy, lifecycle, deployment and boundary tests
+evals/                          WebMCP agent trajectories and generated lifecycle schemas
 assets/                         Intent brand and reference architecture
 scripts/build.mjs               static production build and exact-origin injection
 server.mjs                      dependency-free local development servers
