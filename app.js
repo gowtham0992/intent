@@ -20,10 +20,10 @@ function configuredOrigin() {
 }
 
 const commerceOrigin = configuredOrigin();
-const state = { goal:null, mandate:null, mandateVersion:1, offers:[], selected:null, staged:null, activity:[], comparedVersions:new Set(), authority:"absent", capability:createCapabilityLedger(ACTION_TOOL), grant:null, controller:null, timeout:null, countdown:null, pendingApproval:null, busy:false };
+const state = { goal:null, mandate:null, mandateVersion:1, offers:[], selected:null, staged:null, activity:[], comparedVersions:new Set(), authority:"absent", capability:createCapabilityLedger(ACTION_TOOL), grant:null, controller:null, timeout:null, countdown:null, pendingApproval:null, busy:false, searchTimers:[] };
 const els = {
   hero:$("#hero"), market:$("#market"), authority:$("#authority"), receipt:$("#receipt"), form:$("#goal-form"), goal:$("#goal"), budget:$("#budget"), country:$("#country"), minimumRating:$("#minimum-rating"), minimumReviews:$("#minimum-reviews"), mandateRating:$("#mandate-rating"), mandateReviews:$("#mandate-reviews"),
-  grid:$("#offers-grid"), dock:$("#selection-dock"), searchButton:$("#goal-form button"), lease:$("#lease-button"), approvalState:$("#approval-state"), leaseCount:$("#lease-count"),
+  grid:$("#offers-grid"), offersStage:$("#offers-stage"), searchProgress:$("#search-progress-text"), dock:$("#selection-dock"), searchButton:$("#goal-form button"), lease:$("#lease-button"), approvalState:$("#approval-state"), leaseCount:$("#lease-count"),
   activityList:$("#activity-list"), receiptActivityList:$("#receipt-activity-list"), approvalLifecycle:$("#approval-lifecycle"), receiptCapabilityReason:$("#receipt-capability-reason"), receiptCapabilityNext:$("#receipt-capability-next"), proof:$("#proof-dialog"), proofList:$("#proof-list"), toast:$("#toast"), toastTitle:$("#toast-title"), toastCopy:$("#toast-copy")
 };
 
@@ -71,7 +71,7 @@ function offerSummary(offer) {
 
 function renderOffer(offer,index) {
   const decision=evaluateOffer(offer,state.mandate);
-  const button=document.createElement("button"); button.type="button"; button.className=`offer-card ${decision.eligible?"eligible":"blocked"}`; button.dataset.variantId=offer.variantId; button.setAttribute("aria-label",`${decision.eligible?"Eligible":"Blocked"}: ${offer.title} from ${offer.seller.name}`);
+  const button=document.createElement("button"); button.type="button"; button.className=`offer-card ${decision.eligible?"eligible":"blocked"}`; button.dataset.variantId=offer.variantId; button.style.setProperty("--offer-index",String(index)); button.setAttribute("aria-label",`${decision.eligible?"Eligible":"Blocked"}: ${offer.title} from ${offer.seller.name}`);
   const rank=document.createElement("span"); rank.className="offer-rank"; rank.textContent=decision.eligible?(index===0?"Eligible · best match":"Eligible"):"Blocked";
   const image=document.createElement("img"); image.className="offer-image"; image.loading="lazy"; image.referrerPolicy="no-referrer"; image.src=offer.image?.url??"/assets/intent-mark-v2.png"; image.alt=offer.image?.alt??offer.title;
   const body=document.createElement("div"); body.className="offer-body";
@@ -88,6 +88,27 @@ function renderOffer(offer,index) {
   bottom.append(price,rating); body.append(seller,title,description,features,bottom); button.append(rank,image,body);
   button.addEventListener("click",()=>selectOffer(offer));
   return button;
+}
+
+function renderOfferSkeleton(index) {
+  const card=document.createElement("article");card.className="offer-skeleton";card.setAttribute("aria-hidden","true");card.style.setProperty("--skeleton-index",String(index));
+  const image=document.createElement("div");image.className="skeleton-image";
+  const body=document.createElement("div");body.className="skeleton-body";
+  for(const width of ["28%","82%","64%","92%","74%"]){const line=document.createElement("i");line.style.width=width;body.append(line);}
+  const footer=document.createElement("div");footer.className="skeleton-footer";body.append(footer);card.append(image,body);return card;
+}
+
+function clearSearchProgress() {
+  for(const timer of state.searchTimers)clearTimeout(timer);state.searchTimers=[];
+  els.market.setAttribute("aria-busy","false");els.offersStage.dataset.loading="false";els.searchProgress.textContent="Inspect freely · your agent stages the proposal";
+}
+
+function renderSearchProgress() {
+  $("#brief-query").textContent=state.goal.query;$("#brief-budget").textContent=money(Math.round(state.goal.budget*100),"USD");$("#brief-country").textContent=state.goal.country;
+  $("#mandate-version").textContent="v1";els.mandateRating.value=String(state.mandate.minimumRating);els.mandateReviews.value=String(state.mandate.minimumReviews);$("#catalog-count").textContent="Querying live UCP inventory";
+  els.grid.replaceChildren(...Array.from({length:6},(_,index)=>renderOfferSkeleton(index)));els.dock.hidden=true;els.market.setAttribute("aria-busy","true");els.offersStage.dataset.loading="true";$("#offers-summary").textContent="Searching live merchants";els.searchProgress.textContent="Connecting to Shopify Global Catalog";view("market");
+  const stages=[[700,"Applying mandate rules","Checking price, availability, and reputation"],[1600,"Ranking eligible offers","Preparing the shared decision room"]];
+  state.searchTimers=stages.map(([delay,summary,detail])=>setTimeout(()=>{if(!state.busy)return;$("#offers-summary").textContent=summary;els.searchProgress.textContent=detail;},delay));
 }
 
 function selectOffer(offer,{agentStaged=false}={}) {
@@ -125,6 +146,7 @@ function stagedApprovalResult(proposal,decision) {
 }
 
 function renderMarket(payload) {
+  clearSearchProgress();
   $("#brief-query").textContent=state.goal.query; $("#brief-budget").textContent=money(Math.round(state.goal.budget*100),"USD"); $("#brief-country").textContent=state.goal.country;
   $("#catalog-count").textContent=`${payload.totalCount.toLocaleString()} live matches · showing ${state.offers.length}`;
   const eligible=state.offers.filter((offer)=>evaluateOffer(offer,state.mandate).eligible).length;
@@ -141,6 +163,8 @@ async function runSearch(input=null) {
     settlePendingApproval({outcome:"superseded",detail:"A new shopping search replaced the staged proposal."});
     state.activity=[];state.comparedVersions.clear();renderActivity();state.goal=validateGoal(proposal.goal??proposal); state.mandate=createMandate(state.goal,proposal.preferences??{minimumRating:proposal.minimumRating,minimumReviews:proposal.minimumReviews});state.mandateVersion=1; revoke("absent");resetCapabilityLedger();
     els.searchButton.disabled=true; els.searchButton.querySelector("span").textContent="Searching live merchants";
+    addActivity({actor:input?"agent":"you",title:"Searching live catalog",detail:"Mandate v1 · Shopify Global Catalog"});
+    renderSearchProgress();
     const payload=await commerce("/v1/search",state.goal);
     state.offers=payload.offers.slice(0,6); renderMarket(payload);
     const eligible=state.offers.filter((offer)=>evaluateOffer(offer,state.mandate).eligible).length;
@@ -148,7 +172,7 @@ async function runSearch(input=null) {
     setAuthority("absent",{reason:CAPABILITY_REASONS.AGENT_STAGING_REQUIRED,actor:input?"agent":"human"});
     toast("Live market ready",`${state.offers.length} real offers arrived through UCP.`);
     return payload;
-  } catch(error){toast("Search unavailable",error.message,true);throw error;}
+  } catch(error){clearSearchProgress();view("hero");toast("Search unavailable",error.message,true);throw error;}
   finally{state.busy=false;els.searchButton.disabled=false;els.searchButton.querySelector("span").textContent=previous;}
 }
 
@@ -302,7 +326,7 @@ async function registerStaticTools() {
   catch(error){console.error("Static WebMCP registration failed.",error);toast("WebMCP registration failed",error.message,true);}
 }
 
-function reset(){revoke("absent");settlePendingApproval({outcome:"reset",detail:"The human ended this shopping decision."});state.goal=null;state.mandate=null;state.mandateVersion=1;state.offers=[];state.selected=null;state.staged=null;state.activity=[];state.comparedVersions.clear();resetCapabilityLedger();renderActivity();els.grid.replaceChildren();els.dock.hidden=true;els.authority.dataset.ready="false";els.lease.disabled=true;els.lease.textContent="Grant one-use authority →";$("#authority-copy").textContent="Your agent can search and compare. It cannot open a checkout until it stages one eligible offer and you grant a one-use capability.";view("hero");}
+function reset(){clearSearchProgress();revoke("absent");settlePendingApproval({outcome:"reset",detail:"The human ended this shopping decision."});state.goal=null;state.mandate=null;state.mandateVersion=1;state.offers=[];state.selected=null;state.staged=null;state.activity=[];state.comparedVersions.clear();resetCapabilityLedger();renderActivity();els.grid.replaceChildren();els.dock.hidden=true;els.authority.dataset.ready="false";els.lease.disabled=true;els.lease.textContent="Grant one-use authority →";$("#authority-copy").textContent="Your agent can search and compare. It cannot open a checkout until it stages one eligible offer and you grant a one-use capability.";view("hero");}
 
 els.form.addEventListener("submit",(event)=>{event.preventDefault();runSearch().catch(()=>{});});
 $("#apply-mandate").addEventListener("click",applyMandate);
