@@ -13,7 +13,7 @@
     "eval:agent": "npm run eval:sync && node scripts/run-webmcp-evals.mjs pre-approval",
     "eval:authority": "npm run eval:sync && node scripts/run-webmcp-evals.mjs granted",
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check app.js && node --check lib/webmcp-tool-contracts.js && node --check lib/policy.js && node --check lib/staging.js && node --check lib/activity.js && node --check lib/tool-readback.js && node --check lib/comparison.js && node --check lib/capability-state.js && node --check lib/commerce-error.js && node --check lib/approval-handshake.js && node --check lib/safe-resume.js && node --check lib/local-durable-object-binding.mjs && node --check cloudflare/commerce-worker.mjs && node --check server.mjs && node --test tests/*.test.mjs"
+    "check": "node --check app.js && node --check lib/webmcp-tool-contracts.js && node --check lib/policy.js && node --check lib/staging.js && node --check lib/activity.js && node --check lib/tool-readback.js && node --check lib/comparison.js && node --check lib/capability-state.js && node --check lib/commerce-error.js && node --check lib/approval-handshake.js && node --check lib/safe-resume.js && node --check lib/tool-registration.js && node --check lib/local-durable-object-binding.mjs && node --check cloudflare/commerce-worker.mjs && node --check server.mjs && node --test tests/*.test.mjs"
   },
   "dependencies": {
     "next": "^16.3.3",

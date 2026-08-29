@@ -46,9 +46,9 @@ The result is not another shopping assistant. It is a working reference product 
 
 | Participant | Responsibility |
 | --- | --- |
-| Agent | Interprets the request, searches live offers, evaluates every deterministic rule, and stages one recommendation |
+| Agent | Interprets the request, compares merchant-provided evidence against product-fit requirements, and stages one recommendation |
 | Human | Reviews the same decision room, changes the mandate, and explicitly grants one-use authority |
-| Intent | Keeps both sides on the same mandate version, records provenance, exposes the exact capability, and enforces it at execution |
+| Intent | Keeps both sides on the same mandate version, applies deterministic price and reputation rules, records provenance, exposes the exact capability, and enforces it at execution |
 
 Neither participant can finish the flow alone. The agent cannot create its own authority. The person cannot grant authority until the agent stages an eligible offer under the current mandate version. If the person changes a rule, the version increments and the old proposal becomes invalid.
 
@@ -65,7 +65,7 @@ No account, credentials, store, Shopify token, or seeded catalog is required.
 4. Optionally refresh before approval. Confirm that Intent restores the mandate, revalidates fresh live offers, and still exposes no checkout capability.
 5. Optionally edit the mandate and ask the agent to read the latest version and stage again.
 6. Click **Grant one-use authority** on the page.
-7. Ask the agent to use the newly available Intent checkout tool.
+7. Watch the pending staging call resume automatically. The agent discovers and invokes the newly available checkout tool in the same turn; no follow-up chat message is required.
 8. Confirm that the merchant cart handoff is returned, <code>paymentSubmitted</code> is <code>false</code>, and the tool disappears.
 
 The observable lifecycle is:
@@ -99,7 +99,7 @@ Intent uses WebMCP as a runtime authority surface, not merely as a structured co
 - **Shared state:** the agent reads and mutates the same versioned decision artifact the person sees.
 - **Visible provenance:** agent-authored ledger entries name the WebMCP tool that produced them, while human and system events remain visually distinct.
 - **Agent-only actions:** comparison matrices, proposal staging, and checkout invocation are structured agent operations rather than duplicated buttons.
-- **Dynamic authority:** the checkout tool is registered only after a human click and revoked through <code>AbortController</code> after use, cancellation, failure, or expiry.
+- **Dynamic authority:** the checkout tool is registered only after a human click. On success, scope is consumed immediately and registration is revoked after the result settles; cancellation, failure, and expiry revoke it immediately.
 - **Explainable disappearance:** the permanent read tool reports why checkout authority is absent, who owns the next step, and the bounded transition history—even after the temporary tool is gone.
 - **Safe resumption:** validated mandate context can survive a refresh, but Intent re-queries UCP and never restores an offer, staged proposal, lease, or dynamic checkout capability.
 - **Inspectable scope:** every field in the temporary tool's input schema is frozen to a single allowed value.
@@ -140,6 +140,7 @@ The first four tools cannot create a cart or grant authority. The fifth tool doe
 ## Enforcement guarantees
 
 - Search input and UCP catalog responses are validated.
+- Search and checkout revalidation both require Shopify's live <code>ships_to</code> eligibility for the exact destination country.
 - Prices remain integer minor units; the current mandate supports USD evidence.
 - Missing rating or review evidence fails closed when the mandate requires it.
 - Product, variant, seller, image, and checkout URLs are validated.
@@ -161,16 +162,17 @@ The first four tools cannot create a cart or grant authority. The fifth tool doe
 - Network access to Shopify's Global Catalog
 - A WebMCP-enabled client to exercise the agent tools; the page still renders in a normal browser
 
-Intent has no runtime npm dependencies:
+Install the pinned toolchain, verify the repository, and start both local services:
 
 ~~~bash
 git clone https://github.com/gowtham0992/intent.git
 cd intent
+npm ci
 npm run check
 npm run dev
 ~~~
 
-Open [http://127.0.0.1:4310](http://127.0.0.1:4310). The command starts the static application on port <code>4310</code> and a dependency-free local commerce gateway on port <code>4312</code>.
+Open [http://127.0.0.1:4310](http://127.0.0.1:4310). The command starts the static application on port <code>4310</code> and a local commerce gateway on port <code>4312</code>. Those two runtime processes use Node built-ins; the installed packages reproduce the Sites, Cloudflare, and evaluation toolchain.
 
 The local gateway calls the real Shopify Global Catalog and advertises the deployed public UCP profile. It does not substitute fixtures when the upstream service fails. For local development it provides an in-memory Durable Object adapter with the same atomic one-use behavior; its leases intentionally disappear when the development server restarts.
 
@@ -181,7 +183,7 @@ npm run check   # syntax checks plus the full test suite
 npm run build   # create the static dist/ output
 ~~~
 
-The suite currently contains 48 top-level tests, including a 14-case boundary matrix, reason-coded lifecycle transitions, mandate-version invalidation, safe-resume isolation, atomic replay rejection, scope-widening rejection, live price revalidation, untrusted-output signaling, mutation read-backs, agent-evaluation contract validation, tool provenance validation, and production configuration checks.
+The suite currently contains 50 top-level tests, including a 14-case boundary matrix, reason-coded lifecycle transitions, mandate-version invalidation, safe-resume isolation, destination enforcement, Chrome-safe dynamic-tool teardown, atomic replay rejection, scope-widening rejection, live price revalidation, untrusted-output signaling, mutation read-backs, agent-evaluation contract validation, tool provenance validation, and production configuration checks.
 
 ## Deploy your own instance
 
@@ -221,7 +223,16 @@ The response should advertise <code>dev.ucp.shopping.catalog.search</code>, <cod
 
 ### 2. Deploy the decision room
 
-The canonical Intent deployment uses ChatGPT Sites. A fork can use ChatGPT Sites, Vercel, or another static host that serves the built assets with the required security headers. The included Vercel configuration is a ready-to-run fallback deployment.
+The canonical Intent deployment uses ChatGPT Sites. The repository already contains the Sites project metadata and Vinext adapter. For a new fork, create or select a Sites project, replace the <code>project_id</code> in <code>.openai/hosting.json</code>, then build from the repository root with the exact Worker origin:
+
+~~~bash
+npm ci
+INTENT_COMMERCE_ORIGIN=https://your-intent-worker.example npm run build:sites
+~~~
+
+Publish the resulting Sites build through ChatGPT Sites. Keep only the Sites project identifier and optional supported resource bindings in <code>.openai/hosting.json</code>; do not commit deployment credentials or secrets. After Sites gives you the final application origin, set that exact origin as <code>MERCHANT_ORIGIN</code> in <code>wrangler.commerce.jsonc</code> and redeploy the Worker.
+
+A fork can instead use Vercel or another static host that serves the built assets with the required security headers. The included Vercel configuration is a ready-to-run fallback deployment.
 
 #### Vercel fallback
 
@@ -285,7 +296,7 @@ Both commands write console, HTML, and JSON reports under the ignored <code>.eva
 ~~~text
 app.js                          page state, WebMCP registration, capability lifecycle
 cloudflare/commerce-worker.mjs UCP gateway, validation, lease issuance and consumption
-lib/                            mandate, evaluation, safe resume, capability ledger, activity and staging logic
+lib/                            mandate, evaluation, safe resume, capability ledger, tool lifecycle, activity and staging logic
 plugins/intent/                 optional Codex routing plugin
 tests/                          policy, lifecycle, deployment and boundary tests
 evals/                          WebMCP agent trajectories and generated lifecycle schemas
@@ -297,6 +308,8 @@ server.mjs                      dependency-free local development servers
 ## Current boundaries
 
 Intent currently supports one physical item, USD mandate evidence, a 60-second lease, Shopify Global Catalog discovery, and merchant-cart handoff. Validated mandate context and bounded activity can resume for 24 hours in same-origin browser storage; offers are re-fetched live, while proposals, leases, and checkout authority never resume.
+
+Natural-language product requirements—such as wattage, port count, material, or dimensions—are judgments the agent makes from untrusted merchant catalog evidence and displays for human review. Intent does not claim to independently verify those facts. The Worker enforces the deterministic authority boundary: exact product and variant, quantity, currency, price ceiling, destination eligibility, rating and review thresholds, lease expiry, single use, replay protection, and live offer consistency.
 
 The origin allowlist is CSRF hygiene, not authentication. A human click gates authority in the page, but it is not cryptographic proof of human identity. The lifecycle ledger is page-asserted transparency, not remote attestation. Merchants do not currently consume or verify the Intent mandate, and an agent can bypass Intent by navigating directly to a public merchant cart. Intent demonstrates an opt-in enforceable execution path for WebMCP clients; it is not a universal commerce firewall.
 

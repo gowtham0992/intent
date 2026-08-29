@@ -53,6 +53,7 @@ test("search calls the public UCP catalog with a public Intent profile", async (
     assert.equal(rpc.params.name, "search_catalog");
     assert.equal(rpc.params.arguments.meta["ucp-agent"].profile, profile);
     assert.equal(rpc.params.arguments.catalog.filters.price.max, 6000);
+    assert.deepEqual(rpc.params.arguments.catalog.filters.ships_to, { country: "US" });
     assert.equal(rpc.params.arguments.catalog.context.address_country, "US");
     return Response.json(ucp());
   };
@@ -64,8 +65,8 @@ test("search calls the public UCP catalog with a public Intent profile", async (
   assert.equal(response.headers.get("Cache-Control"), "no-store");
 });
 
-test("offer handoff revalidates product, variant, price, availability, and URL", async () => {
-  const mockFetch = async (_url, options) => { const rpc = JSON.parse(options.body); assert.equal(rpc.params.name, "lookup_catalog"); assert.deepEqual(rpc.params.arguments.catalog.ids, [product.variants[0].id]); return Response.json(ucp()); };
+test("offer handoff revalidates product, variant, price, destination, availability, and URL", async () => {
+  const mockFetch = async (_url, options) => { const rpc = JSON.parse(options.body); assert.equal(rpc.params.name, "lookup_catalog"); assert.deepEqual(rpc.params.arguments.catalog.ids, [product.variants[0].id]); assert.deepEqual(rpc.params.arguments.catalog.filters.ships_to, { country: "US" }); return Response.json(ucp()); };
   const input = await leased({ ...handoff, productId: product.id });
   const response = await handleRequest(request("/v1/checkout-handoff", input), env, mockFetch);
   const payload = await response.json();

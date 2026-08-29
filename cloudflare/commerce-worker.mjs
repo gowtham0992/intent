@@ -216,7 +216,7 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
     const path = requestUrl.pathname; const body = await readJson(request);
     if (path === "/v1/search") {
       const input = validateSearch(body);
-      const result = await callUcp(env, "search_catalog", { query: input.query, context: { address_country: input.country, currency: "USD", intent: input.query }, filters: { price: { max: Math.round(input.budget * 100) }, available: true, condition: ["new"] }, pagination: { limit: 6 } }, fetchImpl);
+      const result = await callUcp(env, "search_catalog", { query: input.query, context: { address_country: input.country, currency: "USD", intent: input.query }, filters: { price: { max: Math.round(input.budget * 100) }, ships_to: { country: input.country }, available: true, condition: ["new"] }, pagination: { limit: 6 } }, fetchImpl);
       if (!result.offers.length) return json(appOrigin, { error: { code: "NO_MATCH", message: "No live, available offers matched this brief.", requestId } }, 404);
       return json(appOrigin, { ...result, source: { protocol: "UCP", version: UCP_VERSION, provider: "Shopify Global Catalog", live: true, cached: false } });
     }
@@ -227,7 +227,7 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
     if (path === "/v1/checkout-handoff") {
       const input = validateHandoff(body);
       await consumeLease(env, input);
-      const result = await callUcp(env, "lookup_catalog", { ids: [input.variantId], context: { address_country: input.country, currency: input.currency }, filters: { available: true } }, fetchImpl);
+      const result = await callUcp(env, "lookup_catalog", { ids: [input.variantId], context: { address_country: input.country, currency: input.currency }, filters: { ships_to: { country: input.country }, available: true } }, fetchImpl);
       const offer = result.offers.find((candidate) => candidate.variantId === input.variantId);
       if (!offer || !offer.available) throw Object.assign(new Error("The approved offer is no longer available."), { code: "OFFER_UNAVAILABLE", status: 409 });
       if (offer.productId !== input.productId) throw Object.assign(new Error("The product identity changed. Review it again."), { code: "OFFER_CHANGED", status: 409 });

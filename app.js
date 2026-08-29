@@ -10,6 +10,7 @@ import { commerceErrorFromResponse } from "./lib/commerce-error.js";
 import { createApprovalHandshake } from "./lib/approval-handshake.js";
 import { createToolReadback } from "./lib/tool-readback.js";
 import { createResumeSnapshot, parseResumeSnapshot } from "./lib/safe-resume.js";
+import { deferToolUnregistration } from "./lib/tool-registration.js";
 
 const $ = (selector) => document.querySelector(selector);
 const LEASE_MS = 60_000;
@@ -311,6 +312,13 @@ function revoke(nextState,event=null) {
   state.controller=null;state.timeout=null;state.countdown=null;state.grant=null;setAuthority(nextState,event);
 }
 
+function completeCapabilityExecution(event) {
+  const controller=state.controller;
+  clearTimeout(state.timeout);clearInterval(state.countdown);
+  state.controller=null;state.timeout=null;state.countdown=null;state.grant=null;setAuthority("used",event);
+  deferToolUnregistration(controller);
+}
+
 async function receiptFingerprint(handoff) {
   const canonical=JSON.stringify({productId:handoff.productId,variantId:handoff.variantId,amountMinor:handoff.price.amountMinor,currency:handoff.price.currency,seller:handoff.seller.name,mandateVersion:state.mandateVersion,mandate:state.mandate,capability:ACTION_TOOL,state:"revoked_after_use"});
   const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(canonical));const hex=[...new Uint8Array(digest)].map(byte=>byte.toString(16).padStart(2,"0")).join("");
@@ -340,7 +348,7 @@ async function leaseCapability() {
       async execute(input){
         try{
           const authorized=state.grant?.consume(input);if(!authorized)throw new Error("Authority is no longer live.");
-          const payload=await commerce("/v1/checkout-handoff",authorized);addActivity({actor:"agent",title:"Opened exact checkout",detail:`${payload.handoff.seller.name} · ${money(payload.handoff.price.amountMinor,payload.handoff.price.currency)}`,tool:ACTION_TOOL});revoke("used",{reason:CAPABILITY_REASONS.CONSUMED,actor:"agent"});addActivity({actor:"intent",title:"Consumed one-use authority",detail:"Replay is blocked server-side"});els.leaseCount.textContent="0";els.lease.textContent="Capability consumed";$("#authority-copy").textContent="The live offer was revalidated and the merchant handoff was returned. The one-use capability is gone and replay is blocked.";renderReceipt(payload.handoff);toast("Checkout handoff ready","Authority consumed. Payment was not submitted.");
+          const payload=await commerce("/v1/checkout-handoff",authorized);addActivity({actor:"agent",title:"Opened exact checkout",detail:`${payload.handoff.seller.name} · ${money(payload.handoff.price.amountMinor,payload.handoff.price.currency)}`,tool:ACTION_TOOL});completeCapabilityExecution({reason:CAPABILITY_REASONS.CONSUMED,actor:"agent"});addActivity({actor:"intent",title:"Consumed one-use authority",detail:"Replay is blocked server-side"});els.leaseCount.textContent="0";els.lease.textContent="Capability consumed";$("#authority-copy").textContent="The live offer was revalidated and the merchant handoff was returned. The one-use capability is gone and replay is blocked.";renderReceipt(payload.handoff);toast("Checkout handoff ready","Authority consumed. Payment was not submitted.");
           return {content:[{type:"text",text:`Exact offer revalidated. No payment was submitted. Merchant checkout: ${payload.handoff.checkoutUrl}`}],handoff:payload.handoff,authority:snapshotCapability(state.capability),readback:mutationReadback()};
         }catch(error){const reason=capabilityReasonForExecutionError(error.code);const terminalState=reason===CAPABILITY_REASONS.EXPIRED_UNUSED?"expired":"used";revoke(terminalState,{reason,actor:"server",errorCode:error.code});addActivity({actor:"intent",title:"Execution failed closed",detail:error.message});$("#authority-copy").textContent=`The attempt failed closed and authority was removed: ${error.message}`;els.lease.disabled=false;toast("Handoff failed closed",error.message,true);throw error;}
       }
