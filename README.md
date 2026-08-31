@@ -191,7 +191,7 @@ The first four tools cannot create a cart or grant authority. The fifth tool doe
 
 ### Prerequisites
 
-- Node.js 20 or later
+- Node.js 22.13 or later (required by the Sites build toolchain)
 - Network access to Shopify's Global Catalog
 - A WebMCP-enabled client to exercise the agent tools; the page still renders in a normal browser
 
@@ -216,7 +216,7 @@ npm run check   # syntax checks plus the full test suite
 npm run build   # create the static dist/ output
 ~~~
 
-The suite currently contains 52 top-level tests, including a 14-case boundary matrix, reason-coded lifecycle transitions, mandate-version invalidation, safe-resume isolation, malformed-catalog isolation, destination enforcement, Chrome-safe dynamic-tool teardown, atomic replay rejection, scope-widening rejection, live price revalidation, untrusted-output signaling, mutation read-backs, agent-evaluation contract validation, tool provenance validation, and production configuration checks.
+The suite currently contains 53 top-level tests, including a 14-case boundary matrix, reason-coded lifecycle transitions, mandate-version invalidation, safe-resume isolation, malformed-catalog isolation, destination enforcement, Chrome-safe dynamic-tool teardown, atomic replay rejection, scope-widening rejection, live price revalidation, untrusted-output signaling, mutation read-backs, agent-evaluation contract validation, tool provenance validation, and production configuration checks.
 
 ## Deploy your own instance
 
