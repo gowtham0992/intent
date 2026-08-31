@@ -11,6 +11,8 @@
 <p align="center">
   <a href="https://intent-commerce.gowtham0992.chatgpt.site/intent">Live product on ChatGPT Sites</a>
   ·
+  <a href="https://youtu.be/GJdAUbHQP2g">2:12 demo</a>
+  ·
   <a href="#try-the-live-product">Try it</a>
   ·
   <a href="#architecture">Architecture</a>
@@ -27,6 +29,17 @@ Intent is a shared WebMCP decision room for consequential agent actions. An agen
 The Cloudflare backend atomically consumes that authority and revalidates the live Shopify offer before returning a merchant cart URL. Replay, scope widening, price drift, unavailability, and mandate violations fail closed. Intent never accepts payment credentials or submits payment.
 
 The decision context can also survive a refresh without carrying authority across it: Intent restores the validated mandate and bounded collaboration history, re-fetches live offers, and keeps proposals, leases, and the checkout capability absent.
+
+## Hackathon proof
+
+Intent was created during [The WebMCP Challenge](https://webmcp.devpost.com/). The complete product flow is publicly verifiable without an account:
+
+- **Live app:** [intent-commerce.gowtham0992.chatgpt.site/intent](https://intent-commerce.gowtham0992.chatgpt.site/intent)
+- **Demo:** [Intent — One-Use Authority for Agentic Commerce](https://youtu.be/GJdAUbHQP2g) (2 minutes 12 seconds, with narration)
+- **Tested client:** Codex's in-app browser, using the page-defined WebMCP tools end to end
+- **Open-source license:** [MIT](LICENSE)
+
+The demo searches Shopify's live Global Catalog, stages an offer, pauses on the person's decision, registers a temporary checkout tool after approval, returns a real merchant-cart handoff, and removes the capability after one use. It does not submit payment.
 
 ## Why Intent exists
 
@@ -110,6 +123,26 @@ Intent uses WebMCP as a runtime authority surface, not merely as a structured co
 Without WebMCP, Intent would be a shopping page with a guarded checkout button. With WebMCP, the page can change what the visiting agent is capable of doing during the session.
 
 The registration lifecycle is implemented in [app.js](app.js), and server enforcement lives in [cloudflare/commerce-worker.mjs](cloudflare/commerce-worker.mjs).
+
+The page registers its tools directly through the required WebMCP browser API. The permanent collaboration tools are registered on connection; the checkout tool uses the same API only after a person approves the frozen proposal:
+
+~~~js
+await document.modelContext.registerTool({
+  ...createCheckoutToolContract({
+    mandateVersion: state.mandateVersion,
+    title,
+    seller,
+    displayPrice: money(scope.amountMinor, scope.currency),
+    scope
+  }),
+  async execute(input) {
+    const authorized = state.grant?.consume(input);
+    return commerce("/v1/checkout-handoff", authorized);
+  }
+}, { signal: controller.signal });
+~~~
+
+The production implementation builds this contract with single-value schema constraints, validates it again in the handler, and enforces scope, expiry, replay protection, and live offer consistency in the Worker. Aborting <code>controller</code> removes the temporary tool from the agent's available capabilities.
 
 ## Architecture
 
@@ -314,6 +347,10 @@ Natural-language product requirements—such as wattage, port count, material, o
 The origin allowlist is CSRF hygiene, not authentication. A human click gates authority in the page, but it is not cryptographic proof of human identity. The lifecycle ledger is page-asserted transparency, not remote attestation. Merchants do not currently consume or verify the Intent mandate, and an agent can bypass Intent by navigating directly to a public merchant cart. Intent demonstrates an opt-in enforceable execution path for WebMCP clients; it is not a universal commerce firewall.
 
 Accounts, account-synced or cross-device mandates, multi-item checkout, payment execution, merchant-side mandate verification, and universal client compatibility are outside the current scope.
+
+## Third-party services and content
+
+Intent uses Shopify Global Catalog/UCP for live merchant offers and checkout handoffs, Cloudflare Workers and Durable Objects for the enforcement service, and ChatGPT Sites for the canonical web deployment. Merchant names, product text, product images, ratings, prices, and checkout URLs are returned by the live catalog and remain the property of their respective owners. Intent does not bundle third-party catalog data or payment credentials in this repository.
 
 ## License
 
