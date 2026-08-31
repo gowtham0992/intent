@@ -36,7 +36,7 @@ Intent was created during [The WebMCP Challenge](https://webmcp.devpost.com/). T
 
 - **Live app:** [intent-commerce.gowtham0992.chatgpt.site/intent](https://intent-commerce.gowtham0992.chatgpt.site/intent)
 - **Demo:** [Intent — One-Use Authority for Agentic Commerce](https://youtu.be/GJdAUbHQP2g) (2 minutes 12 seconds, with narration)
-- **Tested client:** Codex's in-app browser, using the page-defined WebMCP tools end to end
+- **Tested clients:** Codex's in-app browser and Google Chrome 151 with WebMCP enabled, using the page-defined WebMCP tools end to end. The Chrome clean-room test used no Intent plugin or skill.
 - **Open-source license:** [MIT](LICENSE)
 
 The demo searches Shopify's live Global Catalog, stages an offer, pauses on the person's decision, registers a temporary checkout tool after approval, returns a real merchant-cart handoff, and removes the capability after one use. It does not submit payment.
