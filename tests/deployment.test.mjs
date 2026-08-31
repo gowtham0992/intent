@@ -7,6 +7,9 @@ test("production surface uses an injected exact commerce origin without an ifram
   const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
   const build = await readFile(new URL("../scripts/build.mjs", import.meta.url), "utf8");
   const sitesBuild = await readFile(new URL("../scripts/prepare-sites.mjs", import.meta.url), "utf8");
+  const sitesPage = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  const intentRoute = await readFile(new URL("../app/intent/route.ts", import.meta.url), "utf8");
+  const profileRoute = await readFile(new URL("../app/.well-known/ucp/route.ts", import.meta.url), "utf8");
   const toolContracts = await readFile(new URL("../lib/webmcp-tool-contracts.js", import.meta.url), "utf8");
   const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.doesNotMatch(app, /127\.0\.0\.1/);
@@ -41,6 +44,14 @@ test("production surface uses an injected exact commerce origin without an ifram
   assert.doesNotMatch(build, /INTENT_VAULT_ORIGIN/);
   assert.match(sitesBuild, /process\.env\.INTENT_COMMERCE_ORIGIN/);
   assert.match(sitesBuild, /exact HTTP\(S\) origin/);
+  assert.doesNotMatch(sitesBuild, /intent\.html/);
+  assert.match(sitesPage, /window\.location\.replace\("\/intent"\)/);
+  assert.match(intentRoute, /export const dynamic = "force-dynamic"/);
+  assert.match(intentRoute, /Content-Security-Policy/);
+  assert.match(intentRoute, /frame-ancestors 'self'/);
+  assert.match(intentRoute, /Permissions-Policy/);
+  assert.match(profileRoute, /Access-Control-Allow-Origin/);
+  assert.match(profileRoute, /public, max-age=300/);
   assert.match(layout, /metadataBase:\s*new URL\("https:\/\/intent-commerce\.gowtham0992\.chatgpt\.site"\)/);
 });
 
