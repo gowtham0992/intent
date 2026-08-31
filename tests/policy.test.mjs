@@ -7,6 +7,7 @@ const scope = { leaseId: "9db727ff-9708-4afa-a31d-d55b688289e5", productId: "gid
 
 test("shopping brief accepts only the facts needed for public discovery", () => {
   assert.deepEqual(validateGoal(goal), goal);
+  assert.deepEqual(validateGoal({ query: goal.query, budget: goal.budget }), { ...goal, country: "US" });
   assert.throws(() => validateGoal({ ...goal, email: "private@example.com" }), /unsupported field/);
   assert.throws(() => validateGoal({ ...goal, budget: 0 }), /Budget/);
 });

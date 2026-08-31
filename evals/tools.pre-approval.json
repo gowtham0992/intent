@@ -2,7 +2,8 @@
   "tools": [
     {
       "name": "intent_propose_purchase_mandate",
-      "description": "Propose bounded shopping rules, search live UCP offers, and open Intent's shared human-editable decision room. Call only when the user supplied an explicit hard budget; never invent or infer one. Preserve every stated requirement, and pass 0 for rating or review thresholds the user did not specify. This cannot select an offer, grant authority, or create a cart.",
+      "title": "Search products and propose mandate",
+      "description": "Searches the live product catalog for a physical-product query and explicit hard budget, creates a versioned purchase mandate with optional destination and reputation thresholds, and opens Intent's shared decision room. Returns normalized product details, eligibility evidence, source provenance, and canonical state readback. Checkout authority remains absent.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -41,17 +42,15 @@
         },
         "required": [
           "query",
-          "budget",
-          "country",
-          "minimumRating",
-          "minimumReviews"
+          "budget"
         ],
         "additionalProperties": false
       }
     },
     {
       "name": "intent_compare_candidates",
-      "description": "Evaluate every live candidate against every deterministic rule in the current human-visible mandate. Returns an audit summary plus exact reasons each offer is eligible or blocked. Read-only.",
+      "title": "Compare product candidates",
+      "description": "Evaluates every live product candidate against every deterministic rule in the current human-visible mandate. Returns normalized product details, an audit summary, and exact reasons each offer is eligible or blocked, then records the evaluation in the shared collaboration history.",
       "inputSchema": {
         "type": "object",
         "properties": {},
@@ -60,7 +59,8 @@
     },
     {
       "name": "intent_read_purchase_mandate",
-      "description": "Read the current human-edited purchase mandate, staged proposal, collaboration history, safe-resume and live-revalidation status, and the reason-coded lifecycle of checkout authority—including why the dynamic capability is absent and which actor owns the next step. Read-only; capability reasons are page-asserted transparency, not identity attestation.",
+      "title": "Read purchase mandate",
+      "description": "Reads the current human-edited purchase mandate, selected product details, staged proposal, collaboration history, safe-resume and live-revalidation status, and the reason-coded lifecycle of checkout authority—including why the dynamic capability is absent and which actor owns the next step. Read-only; capability reasons are page-asserted transparency, not identity attestation.",
       "inputSchema": {
         "type": "object",
         "properties": {},
@@ -69,7 +69,8 @@
     },
     {
       "name": "intent_stage_candidate_for_approval",
-      "description": "Stage one eligible live candidate under the exact current mandate version, open its human approval screen, and wait for the decision in this same tool call. If the human grants, continue by refreshing tools and invoking the newly live one-use checkout capability. This tool cannot grant itself authority, create a cart, or submit payment.",
+      "title": "Stage candidate for approval",
+      "description": "Stages one eligible live candidate under the exact current mandate version, opens its human approval screen, and waits for the decision in the same tool call. Returns the human decision and canonical state readback. Approval makes a separate one-use checkout capability available; payment remains with the person and merchant.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -82,7 +83,7 @@
           "mandateVersion": {
             "type": "integer",
             "minimum": 1,
-            "description": "The current mandate version returned by Intent; never reuse a version after the human edits the mandate."
+            "description": "The current mandate version returned by Intent; earlier versions are stale after a human edit."
           }
         },
         "required": [

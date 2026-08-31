@@ -2,7 +2,8 @@
   "tools": [
     {
       "name": "intent_read_purchase_mandate",
-      "description": "Read the current human-edited purchase mandate, staged proposal, collaboration history, safe-resume and live-revalidation status, and the reason-coded lifecycle of checkout authority—including why the dynamic capability is absent and which actor owns the next step. Read-only; capability reasons are page-asserted transparency, not identity attestation.",
+      "title": "Read purchase mandate",
+      "description": "Reads the current human-edited purchase mandate, selected product details, staged proposal, collaboration history, safe-resume and live-revalidation status, and the reason-coded lifecycle of checkout authority—including why the dynamic capability is absent and which actor owns the next step. Read-only; capability reasons are page-asserted transparency, not identity attestation.",
       "inputSchema": {
         "type": "object",
         "properties": {},
@@ -11,7 +12,8 @@
     },
     {
       "name": "intent_open_approved_checkout_once",
-      "description": "Execute human-approved mandate v2 once. Revalidate and return the checkout for exactly 1 × Anker Prime Charger (100W, 3 Ports, GaN) from Anker at $69.99, within the frozen budget and reputation rules. This cannot submit payment. If the user asks to change the product, merchant, price, quantity, destination, or mandate after approval, do not invoke this capability; read current state and require a new proposal.",
+      "title": "Open approved checkout once",
+      "description": "Executes human-approved mandate v2 once. Revalidates and returns the checkout for exactly 1 × Anker Prime Charger (100W, 3 Ports, GaN) from Anker at $69.99, within the frozen budget and reputation rules. Payment remains unsubmitted. Any changed product, merchant, price, quantity, destination, or mandate requires a separately approved capability.",
       "inputSchema": {
         "type": "object",
         "properties": {

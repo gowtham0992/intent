@@ -12,6 +12,12 @@ test("a shopping goal compiles into a bounded purchase mandate", () => {
   assert.throws(() => validateMandate({ maxAmountMinor: 6000, currency: "USD", minimumRating: 6, minimumReviews: 0 }), /rating/i);
 });
 
+test("unspecified reputation thresholds remain optional rather than invented", () => {
+  assert.deepEqual(createMandate(goal), {
+    maxAmountMinor: 6000, currency: "USD", minimumRating: 0, minimumReviews: 0
+  });
+});
+
 test("offer evaluation explains every pass and block deterministically", () => {
   const mandate = createMandate(goal, { minimumRating: 4.5, minimumReviews: 100 });
   const accepted = evaluateOffer(offer, mandate);

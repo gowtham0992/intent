@@ -47,11 +47,19 @@ test("committed WebMCP eval schemas are generated from the production tool contr
   assert.deepEqual(await readJson("../evals/tools.granted.json"), expected.granted);
 
   for (const tool of [...expected.preApproval.tools, ...expected.granted.tools]) {
+    assert.ok(tool.title?.length > 4, `${tool.name} needs a human-readable title`);
     assert.ok(tool.description.length > 40, `${tool.name} needs a decision-useful description`);
+    assert.doesNotMatch(tool.description, /\b(call only|never invent|pass 0|continue by|do not invoke)\b/i, `${tool.name} metadata must describe rather than instruct`);
     for (const [name, property] of Object.entries(tool.inputSchema.properties)) {
       assert.ok(property.description?.length > 12, `${tool.name}.${name} needs a property description`);
     }
   }
+
+  const propose = expected.preApproval.tools.find(({ name }) => name === "intent_propose_purchase_mandate");
+  assert.deepEqual(propose.inputSchema.required, ["query", "budget"]);
+  assert.equal(propose.inputSchema.properties.country.default, "US");
+  assert.equal(propose.inputSchema.properties.minimumRating.default, 0);
+  assert.equal(propose.inputSchema.properties.minimumReviews.default, 0);
 });
 
 test("agent evaluation suites reference only tools and arguments available in each lifecycle state", async () => {
@@ -60,7 +68,7 @@ test("agent evaluation suites reference only tools and arguments available in ea
   const granted = await readJson("../evals/granted-authority.json");
   assertSuiteContract(preApproval, tools.preApproval.tools);
   assertSuiteContract(granted, tools.granted.tools);
-  assert.equal(preApproval.length, 9);
+  assert.equal(preApproval.length, 10);
   assert.equal(granted.length, 3);
 });
 

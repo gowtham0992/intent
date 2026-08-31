@@ -1,5 +1,42 @@
 [
   {
+    "name": "accepts an ordinary budget-only shopping request with safe defaults",
+    "messages": [
+      {
+        "role": "user",
+        "type": "message",
+        "content": "Find me a carry-on suitcase under $300."
+      }
+    ],
+    "expectedCall": [
+      {
+        "ordered": [
+          {
+            "functionName": "intent_propose_purchase_mandate",
+            "arguments": {
+              "query": { "$pattern": "(?i)carry-on suitcase" },
+              "budget": 300
+            },
+            "mockOutput": {
+              "mandate": { "version": 1, "maxAmountMinor": 30000, "currency": "USD", "minimumRating": 0, "minimumReviews": 0 },
+              "offers": []
+            }
+          },
+          {
+            "functionName": "intent_compare_candidates",
+            "arguments": {},
+            "optional": true
+          },
+          {
+            "functionName": "intent_read_purchase_mandate",
+            "arguments": {},
+            "optional": true
+          }
+        ]
+      }
+    ]
+  },
+  {
     "name": "extracts a precise charger mandate and stages only after comparison",
     "messages": [
       {
