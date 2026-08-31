@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./sites.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://intent-commerce.gowtham0992.chatgpt.site"),
   title: "Intent — Human-approved authority for agentic shopping",
   description: "Your agent shops. You call the shots. Intent turns approval into narrow, expiring, server-enforced authority.",
   icons: {

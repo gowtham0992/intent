@@ -8,6 +8,7 @@ test("production surface uses an injected exact commerce origin without an ifram
   const build = await readFile(new URL("../scripts/build.mjs", import.meta.url), "utf8");
   const sitesBuild = await readFile(new URL("../scripts/prepare-sites.mjs", import.meta.url), "utf8");
   const toolContracts = await readFile(new URL("../lib/webmcp-tool-contracts.js", import.meta.url), "utf8");
+  const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.doesNotMatch(app, /127\.0\.0\.1/);
   assert.match(html, /<script src="\/config\.js"><\/script>/);
   assert.doesNotMatch(html, /<iframe/);
@@ -40,6 +41,7 @@ test("production surface uses an injected exact commerce origin without an ifram
   assert.doesNotMatch(build, /INTENT_VAULT_ORIGIN/);
   assert.match(sitesBuild, /process\.env\.INTENT_COMMERCE_ORIGIN/);
   assert.match(sitesBuild, /exact HTTP\(S\) origin/);
+  assert.match(layout, /metadataBase:\s*new URL\("https:\/\/intent-commerce\.gowtham0992\.chatgpt\.site"\)/);
 });
 
 test("production hosts allowlist only the exact app and commerce origins", async () => {

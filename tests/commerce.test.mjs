@@ -45,6 +45,33 @@ test("catalog normalization yields safe, live, minor-unit offers", () => {
   assert.equal(offers[0].checkoutUrl, product.variants[0].checkout_url);
 });
 
+test("catalog normalization isolates malformed variants from valid offers", () => {
+  const malformed = {
+    ...product.variants[0],
+    id: "gid://shopify/ProductVariant/999",
+    checkout_url: "https://different-merchant.example/cart/999:1"
+  };
+  const offers = normalizeCatalog(ucp([{ ...product, variants: [malformed, product.variants[0]] }]).result.structuredContent).offers;
+
+  assert.equal(offers.length, 1);
+  assert.equal(offers[0].variantId, product.variants[0].id);
+});
+
+test("search returns no match when every live variant is malformed", async () => {
+  const malformed = {
+    ...product.variants[0],
+    checkout_url: "https://different-merchant.example/cart/999:1"
+  };
+  const response = await handleRequest(
+    request("/v1/search", goal),
+    env,
+    async () => Response.json(ucp([{ ...product, variants: [malformed] }]))
+  );
+
+  assert.equal(response.status, 404);
+  assert.equal((await response.json()).error.code, "NO_MATCH");
+});
+
 test("search calls the public UCP catalog with a public Intent profile", async () => {
   const mockFetch = async (url, options) => {
     assert.equal(url, "https://catalog.shopify.com/api/ucp/mcp");
@@ -81,7 +108,8 @@ test("handoff fails closed on price drift, unavailable products, and unsafe URLs
   const gone = await handleRequest(request("/v1/checkout-handoff", await leased({ ...handoff, productId: product.id })), env, async () => Response.json(ucp([{ ...product, variants: [{ ...product.variants[0], availability: { available: false } }] }])));
   assert.equal(gone.status, 409);
   const unsafe = await handleRequest(request("/v1/checkout-handoff", await leased({ ...handoff, productId: product.id })), env, async () => Response.json(ucp([{ ...product, variants: [{ ...product.variants[0], checkout_url: "javascript:alert(1)" }] }])));
-  assert.equal(unsafe.status, 502);
+  assert.equal(unsafe.status, 409);
+  assert.equal((await unsafe.json()).error.code, "OFFER_UNAVAILABLE");
 });
 
 test("search rejects excess fields, denied origins, and malformed UCP", async () => {

@@ -163,7 +163,7 @@ export function normalizeCatalog(content) {
   const offers = [];
   for (const product of products) {
     for (const variant of product?.variants ?? []) {
-      try { if (variant.availability?.available === true) offers.push(normalizeVariant(product, variant)); } catch (error) { if (error instanceof URIError) continue; throw error; }
+      try { if (variant.availability?.available === true) offers.push(normalizeVariant(product, variant)); } catch (error) { if (error instanceof TypeError || error instanceof URIError) continue; throw error; }
     }
   }
   return { offers, totalCount: Number(content.pagination?.total_count ?? offers.length), hasNextPage: Boolean(content.pagination?.has_next_page), messages: Array.isArray(content.messages) ? content.messages.slice(0, 8) : [] };

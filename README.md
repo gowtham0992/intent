@@ -183,7 +183,7 @@ npm run check   # syntax checks plus the full test suite
 npm run build   # create the static dist/ output
 ~~~
 
-The suite currently contains 50 top-level tests, including a 14-case boundary matrix, reason-coded lifecycle transitions, mandate-version invalidation, safe-resume isolation, destination enforcement, Chrome-safe dynamic-tool teardown, atomic replay rejection, scope-widening rejection, live price revalidation, untrusted-output signaling, mutation read-backs, agent-evaluation contract validation, tool provenance validation, and production configuration checks.
+The suite currently contains 52 top-level tests, including a 14-case boundary matrix, reason-coded lifecycle transitions, mandate-version invalidation, safe-resume isolation, malformed-catalog isolation, destination enforcement, Chrome-safe dynamic-tool teardown, atomic replay rejection, scope-widening rejection, live price revalidation, untrusted-output signaling, mutation read-backs, agent-evaluation contract validation, tool provenance validation, and production configuration checks.
 
 ## Deploy your own instance
 
